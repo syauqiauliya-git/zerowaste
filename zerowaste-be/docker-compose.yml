@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Service
+  mongodb:
+    image: mongo:latest
+    container_name: zerowaste-mongo
+    restart: always # Keep the database running
+    ports:
+      - 27017:27017 # Maps container port 27017 to your host machine
+    environment:
+      # Set up initial database name (optional, but good practice)
+      MONGO_INITDB_DATABASE: zerowastedb 
+    volumes:
+      # Persist data outside the container so it's not lost on restart
+      - mongo-data:/data/db 
+
+  # 2. Node.js Backend Service (Optional, but recommended for full stack)
+  # You can continue to run your Node.js app directly via 'npm run dev' 
+  # or define it here if you want to containerize the whole stack later.
+
+volumes:
+  mongo-data: # Define the volume for persistent data storage
