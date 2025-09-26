@@ -1,6 +1,13 @@
+// src/server.js (TEMPORARY VERSION for Step 1/2 verification)
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+// Imports for Structure and Error Handling
+import apiRouter from './routes/api.js';
+import connectDB from './db/connect.js';
+import AppError from './utils/AppError.js';
+import globalErrorHandler from './middleware/errorHandler.js';
 
 // Load environment variables
 dotenv.config();
@@ -12,50 +19,44 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10kb' })); 
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'ZeroWaste API Server is running 🚀',
-    project: 'MBG Food Waste Monitoring System',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  });
+// ----------------------------------------------------
+// 1. ROUTE HANDLERS
+// Use the centralized API router under '/api/v1'
+app.use('/api/v1', apiRouter);
+
+// ----------------------------------------------------
+// 2. UNHANDLED ROUTE (404) CATCH-ALL
+app.all('*', (req, res, next) => {
+  // Pass the error to the global error handler middleware
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Basic API info
-app.get('/api', (req, res) => {
-  res.json({
-    name: 'ZeroWaste API',
-    version: '1.0.0',
-    description: 'Backend for MBG Food Waste Monitoring System',
-    status: 'Active',
-    endpoints: {
-      health: '/api/health'
-    }
-  });
-});
+// ----------------------------------------------------
+// 3. GLOBAL ERROR HANDLER
+// This must be the last middleware in the chain
+app.use(globalErrorHandler);
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Endpoint not found',
-    message: `Route ${req.originalUrl} does not exist` 
-  });
-});
-
+// ----------------------------------------------------
+// 4. SERVER STARTUP LOGIC (Final Version)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`
+
+// Connect to DB, then start the Express server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`
   🚀 ZeroWaste Backend Server Started!
   📍 Port: ${PORT}
   🌱 Environment: ${process.env.NODE_ENV}
   📊 Project: MBG Food Waste Monitoring
   🗓️ Started: ${new Date().toLocaleString()}
   `);
+  });
+}).catch(err => {
+  console.error('Initial setup failed: Could not connect to DB or start server.', err);
+  process.exit(1); // Exit with failure code
 });
 
 export default app;
