@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 // Imports for Structure and Error Handling
 import apiRouter from './routes/api.js';
+import connectDB from './db/connect.js';
 import AppError from './utils/AppError.js';
 import globalErrorHandler from './middleware/errorHandler.js';
 
@@ -39,17 +40,23 @@ app.all('*', (req, res, next) => {
 app.use(globalErrorHandler);
 
 // ----------------------------------------------------
-// 4. SERVER STARTUP LOGIC (TEMPORARY - NO DB CONNECTION)
+// 4. SERVER STARTUP LOGIC (Final Version)
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`
+// Connect to DB, then start the Express server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`
   🚀 ZeroWaste Backend Server Started!
   📍 Port: ${PORT}
   🌱 Environment: ${process.env.NODE_ENV}
   📊 Project: MBG Food Waste Monitoring
   🗓️ Started: ${new Date().toLocaleString()}
   `);
+  });
+}).catch(err => {
+  console.error('Initial setup failed: Could not connect to DB or start server.', err);
+  process.exit(1); // Exit with failure code
 });
 
 export default app;
