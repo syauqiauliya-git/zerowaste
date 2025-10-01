@@ -1,15 +1,26 @@
-import { Colors } from '@/constants/theme';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import React, { useState } from "react";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useState } from 'react'
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Colors } from "@/constants/theme";
+import ImagePicker from "./image-picker";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { sendFeedback } from "@/store/actions/feedback";
 
 function FeedbackForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [className, setClassName] = useState("");
+  const [className, setClassName] = useState<string>("");
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [selectedImage, setSelectedImage] = useState("");
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -17,6 +28,28 @@ function FeedbackForm() {
       setDate(selectedDate);
     }
   };
+
+  const imageTakenHandler = (imagePath: string) => {
+    setSelectedImage(imagePath);
+  };
+
+  const sendFeedbackHandler = async () => {
+    const clas = className.trim();
+    const feedbackMessage = feedback.trim();
+    if (clas.length === 0 || feedbackMessage.length === 0) {
+      alert("Please fill in class and feedback.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await sendFeedback(clas, date.toISOString(), feedbackMessage, selectedImage);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Something went wrong!");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <View>
@@ -31,14 +64,12 @@ function FeedbackForm() {
       </View>
       <View style={styles.formControl}>
         <Text style={styles.label}>Select Date</Text>
-
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             value={date.toISOString().split("T")[0]}
             editable={false}
           />
-
           <Pressable
             onPress={() => setShowPicker(true)}
             style={styles.iconContainer}
@@ -57,7 +88,7 @@ function FeedbackForm() {
         )}
       </View>
       <View style={styles.formControl}>
-        <Text style={styles.label}>Feedback (Optional)</Text>
+        <Text style={styles.label}>Feedback</Text>
         <TextInput
           style={[styles.inputContainer, styles.textArea]}
           value={feedback}
@@ -67,7 +98,7 @@ function FeedbackForm() {
           placeholder="Enter feedback description..."
         />
       </View>
-
+      <ImagePicker onImageTaken={imageTakenHandler} />
       <View>
         {isLoading ? (
           <ActivityIndicator size="small" />
@@ -77,7 +108,7 @@ function FeedbackForm() {
               styles.button,
               pressed && { opacity: 0.9 },
             ]}
-            onPress={() => console.log("Pressed!")}
+            onPress={sendFeedbackHandler}
           >
             <Text style={styles.buttonText}>Send Feedback</Text>
           </Pressable>
@@ -87,7 +118,7 @@ function FeedbackForm() {
   );
 }
 
-export default FeedbackForm
+export default FeedbackForm;
 
 const styles = StyleSheet.create({
   formControl: {
@@ -126,6 +157,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: "center",
+    flex: 1,
   },
   buttonText: {
     color: "white",

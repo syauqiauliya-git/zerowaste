@@ -6,10 +6,10 @@ import FeedbackForm from "@/components/feedback/feedback-form";
 export default function FeedbackScreen() {
   return (
     <KeyboardAvoidingView
-    // behavior="padding"
-    // keyboardVerticalOffset={50}
+      behavior="padding"
+      keyboardVerticalOffset={50}
     >
-      <ScrollView style={styles.scrollView}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         <Header />
         <Tip />
         <FeedbackForm />
@@ -20,6 +20,8 @@ export default function FeedbackScreen() {
 
 const styles = StyleSheet.create({
   scrollView: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    flexGrow: 1,
   },
 });
