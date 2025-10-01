@@ -21,7 +21,7 @@ export default function TabLayout() {
         headerLeft: () => (
           <Image
             source={require("../../assets/images/zerowaste-logo.png")} 
-            style={{ width: 112, height: 32, marginLeft: 15 }}
+            style={{ width: 122, height: 32, marginLeft: 15 }}
             resizeMode="contain"
           />
         ),

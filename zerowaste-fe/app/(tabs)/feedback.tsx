@@ -1,22 +1,25 @@
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import Header from "@/components/feedback/header";
+import Tip from "@/components/feedback/tip";
+import { KeyboardAvoidingView, ScrollView, StyleSheet } from "react-native";
+import FeedbackForm from "@/components/feedback/feedback-form";
 
-export default function TabTwoScreen() {
+export default function FeedbackScreen() {
   return (
-    <ScrollView>
-      <Text>Feedback</Text>
-    </ScrollView>
+    <KeyboardAvoidingView
+    // behavior="padding"
+    // keyboardVerticalOffset={50}
+    >
+      <ScrollView style={styles.scrollView}>
+        <Header />
+        <Tip />
+        <FeedbackForm />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  scrollView: {
+    padding: 18,
   },
 });
