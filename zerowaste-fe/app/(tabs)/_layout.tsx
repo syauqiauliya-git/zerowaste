@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { Image } from 'react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -15,7 +16,18 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
+        headerShown: true,
+        headerTitle: "",
+        headerLeft: () => (
+          <Image
+            source={require("../../assets/images/zerowaste-logo.png")} 
+            style={{ width: 122, height: 32, marginLeft: 15 }}
+            resizeMode="contain"
+          />
+        ),
+        headerStyle: {
+          backgroundColor: "#10B981",
+        },
         tabBarButton: HapticTab,
       }}
     >

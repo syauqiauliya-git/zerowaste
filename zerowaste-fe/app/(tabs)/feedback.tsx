@@ -1,28 +1,27 @@
-import { StyleSheet, Text } from 'react-native';
+import Header from "@/components/feedback/header";
+import Tip from "@/components/feedback/tip";
+import { KeyboardAvoidingView, ScrollView, StyleSheet } from "react-native";
+import FeedbackForm from "@/components/feedback/feedback-form";
 
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
-export default function TabTwoScreen() {
+export default function FeedbackScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={<MaterialIcons name="home" size={28} color="#808080" />}
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={50}
     >
-      <Text>Feedback</Text>
-    </ParallaxScrollView>
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        <Header />
+        <Tip />
+        <FeedbackForm />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  scrollView: {
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    flexGrow: 1,
   },
 });
