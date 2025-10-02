@@ -1,6 +1,7 @@
 // src/routes/api.js
 
 import express from 'express';
+import authRouter from './authRoutes.js';
 // Import feature-specific routers here as they are created
 // import wasteRouter from './wasteRoutes.js';
 
@@ -8,6 +9,7 @@ const router = express.Router();
 
 // 1. Feature Routers
 // Example: router.use('/waste', wasteRouter);
+router.use('/auth', authRouter);
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -18,6 +20,7 @@ router.get('/', (req, res) => {
     status: 'Active',
     endpoints: {
       health: '/api/v1/health', // Reflects the new mounted path
+      auth: '/api/v1/auth',
       base: '/api/v1'
     }
   });
