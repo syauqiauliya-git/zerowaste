@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const teacherSchema = new mongoose.Schema({
+const guruSchema = new mongoose.Schema({
   nama: {
     type: String,
     required: [true, 'Nama harus diisi']
@@ -15,13 +15,13 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password harus diisi']
   },
-  school_id: {
+  sekolah_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'School',
+    ref: 'Sekolah',
     required: true
   }
 }, { timestamps: true });
 
-const Teacher = mongoose.model('Teacher', teacherSchema);
+const Guru = mongoose.model('Guru', guruSchema);
 
-export default Teacher;
+export default Guru;
