@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Teacher from '../models/Teacher.js';
+import Guru from '../models/Guru.js';
 import AppError from '../utils/AppError.js';
 
 const signToken = (id) => {
@@ -12,10 +12,10 @@ const signToken = (id) => {
 // REGISTER
 export const register = async (req, res, next) => {
   try {
-    const { nama, email, password, school_id } = req.body;
+    const { nama, email, password, sekolah_id } = req.body;
 
     // Cek email unik
-    const existing = await Teacher.findOne({ email });
+    const existing = await Guru.findOne({ email });
     if (existing) {
       return next(new AppError('Email sudah digunakan', 400));
     }
@@ -23,20 +23,20 @@ export const register = async (req, res, next) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const teacher = await Teacher.create({
+    const guru = await Guru.create({
       nama,
       email,
       password_hash: hashedPassword,
-      school_id
+      sekolah_id
     });
 
-    const token = signToken(teacher._id);
+    const token = signToken(guru._id);
 
     res.status(201).json({
-      teacher_id: teacher._id,
-      nama: teacher.nama,
-      email: teacher.email,
-      school_id: teacher.school_id,
+      guru_id: guru._id,
+      nama: guru.nama,
+      email: guru.email,
+      sekolah_id: guru.sekolah_id,
       token
     });
   } catch (err) {
@@ -49,22 +49,22 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const teacher = await Teacher.findOne({ email });
-    if (!teacher) {
+    const guru = await Guru.findOne({ email });
+    if (!guru) {
       return next(new AppError('Email atau password salah', 401));
     }
 
-    const valid = await bcrypt.compare(password, teacher.password_hash);
+    const valid = await bcrypt.compare(password, guru.password_hash);
     if (!valid) {
       return next(new AppError('Email atau password salah', 401));
     }
 
-    const token = signToken(teacher._id);
+    const token = signToken(guru._id);
 
     res.status(200).json({
       token,
-      teacher_id: teacher._id,
-      nama: teacher.nama
+      guru_id: guru._id,
+      nama: guru.nama
     });
   } catch (err) {
     next(err);

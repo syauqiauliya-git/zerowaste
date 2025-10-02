@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import AppError from '../utils/AppError.js';
-import Teacher from '../models/Teacher.js';
+import Guru from '../models/Guru.js';
 
 export const protect = async (req, res, next) => {
   try {
@@ -17,13 +17,13 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Cari user di DB
-    const currentTeacher = await Teacher.findById(decoded.id);
-    if (!currentTeacher) {
+    const currentGuru = await Guru.findById(decoded.id);
+    if (!currentGuru) {
       return next(new AppError('Guru tidak ditemukan', 401));
     }
 
     // simpan ke request untuk digunakan di controller lain
-    req.teacher = currentTeacher;
+    req.guru = currentGuru;
     next();
   } catch (err) {
     next(new AppError('Token tidak valid atau kadaluarsa', 401));
