@@ -17,7 +17,7 @@ const teacherSchema = new mongoose.Schema({
   },
   school_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'School',
+    ref: 'School', 
     required: true
   }
 }, { timestamps: true });
