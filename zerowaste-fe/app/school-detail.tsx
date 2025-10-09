@@ -2,7 +2,6 @@ import { Alert, Button, Pressable, ScrollView, StyleSheet, View, TextInput } fro
 import { Text } from '@react-navigation/elements';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
-import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import API_BASE_URL from '@/constants/api';
 
@@ -18,8 +17,44 @@ export default function SchoolDetailScreen() {
     jml_kelas: '',
   });
 
-  const handleDelete = () => {
-    alert("Are you sure you want to delete this school?");
+  const handleDelete = async () => {
+    Alert.alert(
+      "Delete School",
+      "Are you sure you want to delete this school? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsLoading(true);
+              const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
+                method: 'DELETE',
+              });
+              
+              if (response.ok) {
+                console.log('School deleted successfully');
+                // Navigate back to previous page on success
+                router.back();
+              } else {
+                const errorData = await response.json();
+                console.error('Delete failed:', errorData);
+                alert('Failed to delete school');
+              }
+            } catch (error) {
+              console.error('Failed to delete school:', error);
+              alert('Failed to delete school');
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const fetchSchoolDetail = async () => {
