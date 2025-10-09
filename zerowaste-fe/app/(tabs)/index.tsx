@@ -1,74 +1,129 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Text } from '@react-navigation/elements';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import API_BASE_URL from '@/constants/api';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        
+  const router = useRouter();
+  const [schools, setSchools] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const fetchSchools = async () => {
+    try {
+      console.log('Fetching schools from:', API_BASE_URL);
+      const response = await fetch(`${API_BASE_URL}/schools`);
+      const data = await response.json();
+      console.log('Schools fetched:', data.data.schools);
+      setSchools(data.data.schools);
+    } catch (error) {
+      console.error('Failed to fetch schools:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchSchools();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchSchools();
+  }, []);
+
+  const handleSchoolPress = (schoolId: string) => {
+    router.push({
+      pathname: '/school-detail',
+      params: {
+        schoolId: schoolId,
+      },
+    });
+  };
+
+  const renderSchoolItem = (item: { item: { id: string; school_name: string } }) => (
+    <Pressable style={styles.schoolItem} onPress={() => handleSchoolPress(item.item.id)} key={item.item.id}>
+      <Text style={{ fontWeight: 'bold' }}>{item.item.school_name}</Text>
+    </Pressable>
+  );
+
+  return (
+    <ScrollView 
+      contentContainerStyle={styles.scrollView}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+        <View style={styles.schoolContainer}>
+          <View style={styles.schoolHeader}>
+            <LinearGradient
+              colors={["#059669", "#10B981", "#059669"]}
+              start={{ x: -0.1, y: 0.5 }}
+              end={{ x: 1.1, y: 0.5 }}
+              style={styles.gradient}
+            >
+              <Text style={styles.headerTitle}>Schools</Text>
+            </LinearGradient>
+          </View>
+          {schools.length === 0 ? (
+            <View style={styles.schoolItem}>
+              <Text>No schools found</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={schools}
+              renderItem={renderSchoolItem}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  scrollView: {
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    flexGrow: 1,
+    maxHeight: 300,
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: "space-between",
+    alignItems: "center",
+    maxWidth: 400,
+    maxHeight: 400,
+    padding: 15,
+    flexDirection: 'row',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
+  },
+  schoolContainer: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: 'hidden',
+  },
+  schoolHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  headerTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  schoolItem: {
+    borderBottomWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#fff',
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });
