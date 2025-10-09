@@ -3,23 +3,36 @@ import { Text } from '@react-navigation/elements';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import API_BASE_URL from '@/constants/api';
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
   const router = useRouter();
-
+  const [schoolDetail, setSchoolDetail] = useState<any>(null);
+  
   const handleDelete = () => {
     alert("Are you sure you want to delete this school?");
   };
 
-  const handleEdit = () => {
-    router.push({
-      pathname: '/school-edit',
-      params: {
-        schoolId: schoolId,
-      },
-    });
+  const fetchSchoolDetail = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`);
+      const data = await response.json();
+      console.log('School detail response:', data.data.school);
+      setSchoolDetail(data.data.school);
+    } catch (error) {
+      console.error('Failed to fetch school detail:', error);
+    }
   };
+
+  const handleEdit = () => {
+    console.log('Editing school');
+  };
+
+  useEffect(() => {
+    fetchSchoolDetail();
+  }, [schoolId]);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
@@ -30,40 +43,36 @@ export default function SchoolDetailScreen() {
             <Text style={styles.sectionTitle}>School Information</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Name:</Text>
-              <Text style={styles.value}>SDN 1 Kota Tangerang</Text>
+              <Text style={styles.value}>{schoolDetail?.school_name}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Address:</Text>
-              <Text style={styles.value}>Jl. Example No. 123, Tangerang</Text>
+              <Text style={styles.value}>{schoolDetail?.address}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone:</Text>
-              <Text style={styles.value}>(021) 1234-5678</Text>
+              <Text style={styles.label}>Number of Students:</Text>
+              <Text style={styles.value}>{schoolDetail?.jml_murid}</Text>
             </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Waste Statistics</Text>
-            <View style={styles.statsContainer}>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>250 kg</Text>
-                <Text style={styles.statLabel}>Monthly Average</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>75%</Text>
-                <Text style={styles.statLabel}>Recycling Rate</Text>
-              </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Number of Classes:</Text>
+              <Text style={styles.value}>{schoolDetail?.jml_kelas}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Created At:</Text>
+              <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleDateString() : '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Updated At:</Text>
+              <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleDateString() : '-'}</Text>
             </View>
           </View>
 
           <View style={styles.sectionButtons}>
           <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
-              <MaterialIcons name="delete" size={24} color="white" />
               <Text style={styles.buttonText}>Delete</Text>
             </Pressable>
             <Pressable style={[styles.button, { backgroundColor: '#10B981' }]} onPress={handleEdit} >
-              <MaterialIcons name="edit" size={24} color="white" />
-              <Text style={styles.buttonText}>Edit</Text>
+              <Text style={styles.buttonText}>Save</Text>
             </Pressable>
           </View>
         </View>
