@@ -1,4 +1,4 @@
-import { Alert, Button, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Button, Pressable, ScrollView, StyleSheet, View, TextInput } from 'react-native';
 import { Text } from '@react-navigation/elements';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
@@ -10,7 +10,14 @@ export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
   const router = useRouter();
   const [schoolDetail, setSchoolDetail] = useState<any>(null);
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [editData, setEditData] = useState({
+    school_name: '',
+    address: '',
+    jml_murid: '',
+    jml_kelas: '',
+  });
+
   const handleDelete = () => {
     alert("Are you sure you want to delete this school?");
   };
@@ -20,15 +27,51 @@ export default function SchoolDetailScreen() {
       const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`);
       const data = await response.json();
       console.log('School detail response:', data.data.school);
-      setSchoolDetail(data.data.school);
+      const school = data.data.school;
+      setSchoolDetail(school);
+      setEditData({
+        school_name: school.school_name || '',
+        address: school.address || '',
+        jml_murid: school.jml_murid?.toString() || '',
+        jml_kelas: school.jml_kelas?.toString() || '',
+      });
     } catch (error) {
       console.error('Failed to fetch school detail:', error);
     }
   };
 
-  const handleEdit = () => {
-    console.log('Editing school');
+  const handleSave = async () => {
+    if (!editData.school_name.trim() || !editData.address.trim() || !editData.jml_murid.trim() || !editData.jml_kelas.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          school_name: editData.school_name,
+          address: editData.address,
+          jml_murid: parseInt(editData.jml_murid) || 0,
+          jml_kelas: parseInt(editData.jml_kelas) || 0,
+        }),
+      });
+      const data = await response.json();
+      console.log('Update response:', data);
+      setSchoolDetail(data.data.school);
+      router.back();
+    } catch (error) {
+      console.error('Failed to update school:', error);
+      alert('Failed to update school');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   useEffect(() => {
     fetchSchoolDetail();
@@ -36,46 +79,73 @@ export default function SchoolDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
-        <Header title="School Details" icon="school" />
+      <Header title="School Details" icon="school" />
 
-        <View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>School Information</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Name:</Text>
-              <Text style={styles.value}>{schoolDetail?.school_name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Address:</Text>
-              <Text style={styles.value}>{schoolDetail?.address}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Number of Students:</Text>
-              <Text style={styles.value}>{schoolDetail?.jml_murid}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Number of Classes:</Text>
-              <Text style={styles.value}>{schoolDetail?.jml_kelas}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Created At:</Text>
-              <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleDateString() : '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Updated At:</Text>
-              <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleDateString() : '-'}</Text>
-            </View>
+      <View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>School Information</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={editData.school_name}
+              onChangeText={(text) => setEditData({ ...editData, school_name: text })}
+              placeholder="Enter school name"
+            />
           </View>
-
-          <View style={styles.sectionButtons}>
-          <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
-              <Text style={styles.buttonText}>Delete</Text>
-            </Pressable>
-            <Pressable style={[styles.button, { backgroundColor: '#10B981' }]} onPress={handleEdit} >
-              <Text style={styles.buttonText}>Save</Text>
-            </Pressable>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Address:</Text>
+            <TextInput
+              style={styles.input}
+              value={editData.address}
+              onChangeText={(text) => setEditData({ ...editData, address: text })}
+              placeholder="Enter address"
+              multiline
+            />
           </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Number of Students:</Text>
+            <TextInput
+              style={styles.input}
+              value={editData.jml_murid}
+              onChangeText={(text) => setEditData({ ...editData, jml_murid: text })}
+              placeholder="Enter number of students"
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Number of Classes:</Text>
+            <TextInput
+              style={styles.input}
+              value={editData.jml_kelas}
+              onChangeText={(text) => setEditData({ ...editData, jml_kelas: text })}
+              placeholder="Enter number of classes"
+              keyboardType="numeric"
+            />
+          </View>
+           <View style={styles.infoRow}>
+             <Text style={styles.label}>Created At:</Text>
+             <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleString() : '-'}</Text>
+           </View>
+           <View style={styles.infoRow}>
+             <Text style={styles.label}>Updated At:</Text>
+             <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleString() : '-'}</Text>
+           </View>
         </View>
+
+        <View style={styles.sectionButtons}>
+          <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
+            <Text style={styles.buttonText}>Delete</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.button, { backgroundColor: '#10B981' }, isLoading && styles.buttonDisabled]}
+            onPress={handleSave}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>{isLoading ? 'Saving...' : 'Save'}</Text>
+          </Pressable>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -123,6 +193,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#111827',
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    padding: 8,
+    marginLeft: 8,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -176,5 +257,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
 });
