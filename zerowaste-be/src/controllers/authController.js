@@ -1,10 +1,11 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Guru from '../models/Guru.js';
+import User from '../models/User.js';
+import Teacher from '../models/Teacher.js';
 import AppError from '../utils/AppError.js';
 
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const signToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   });
 };
@@ -12,31 +13,51 @@ const signToken = (id) => {
 // REGISTER
 export const register = async (req, res, next) => {
   try {
-    const { nama, email, password, sekolah_id } = req.body;
+    const { name, email, password, number, school_id, role } = req.body;
 
-    // Cek email unik
-    const existing = await Guru.findOne({ email });
-    if (existing) {
+    const validRoles = ['teacher', 'student', 'admin'];
+    if (!validRoles.includes(role)) {
+      return next(new AppError('Role tidak valid. Gunakan teacher, student, atau admin.', 400));
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return next(new AppError('Email sudah digunakan', 400));
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const guru = await Guru.create({
-      nama,
+    const user = await User.create({
+      username: email.split('@')[0],
       email,
       password_hash: hashedPassword,
-      sekolah_id
+      number,
+      role,
+      is_active: true
     });
 
-    const token = signToken(guru._id);
+    let teacher = null;
+
+    if (role === 'teacher') {
+      if (!school_id) {
+        return next(new AppError('school_id diperlukan untuk role teacher', 400));
+      }
+
+      teacher = await Teacher.create({
+        name,
+        user_id: user._id,
+        school_id
+      });
+    }
+
+    const token = signToken(user._id, role);
 
     res.status(201).json({
-      guru_id: guru._id,
-      nama: guru.nama,
-      email: guru.email,
-      sekolah_id: guru.sekolah_id,
+      message: 'Registrasi berhasil',
+      user_id: user._id,
+      role: user.role,
+      email: user.email,
+      ...(teacher && { teacher_id: teacher._id, name: teacher.name, school_id }),
       token
     });
   } catch (err) {
@@ -49,22 +70,32 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const guru = await Guru.findOne({ email });
-    if (!guru) {
+    const user = await User.findOne({ email });
+    if (!user) {
       return next(new AppError('Email atau password salah', 401));
     }
 
-    const valid = await bcrypt.compare(password, guru.password_hash);
+    const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return next(new AppError('Email atau password salah', 401));
     }
 
-    const token = signToken(guru._id);
+    user.last_login = new Date();
+    await user.save();
+
+    let teacher = null;
+    if (user.role === 'teacher') {
+      teacher = await Teacher.findOne({ user_id: user._id });
+    }
+
+    const token = signToken(user._id, user.role);
 
     res.status(200).json({
+      message: 'Login berhasil',
       token,
-      guru_id: guru._id,
-      nama: guru.nama
+      user_id: user._id,
+      role: user.role,
+      ...(teacher && { teacher_id: teacher._id, name: teacher.name })
     });
   } catch (err) {
     next(err);
