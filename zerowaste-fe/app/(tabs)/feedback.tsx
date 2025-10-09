@@ -1,4 +1,4 @@
-import Header from "@/components/feedback/header";
+import Header from "@/components/ui/header";
 import Tip from "@/components/feedback/tip";
 import { KeyboardAvoidingView, ScrollView, StyleSheet } from "react-native";
 import FeedbackForm from "@/components/feedback/feedback-form";
@@ -10,7 +10,7 @@ export default function FeedbackScreen() {
       keyboardVerticalOffset={50}
     >
       <ScrollView contentContainerStyle={styles.scrollView}>
-        <Header />
+        <Header title="Feedback" icon="feedback" />
         <Tip />
         <FeedbackForm />
       </ScrollView>

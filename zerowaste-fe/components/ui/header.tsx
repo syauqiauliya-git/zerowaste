@@ -1,10 +1,10 @@
 import React from 'react'
-import Card from '../ui/card';
+import Card from '@/components/ui/card';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StyleSheet, Text } from "react-native";
 
-function Header() {
+function Header(props: { title: string, icon: keyof typeof MaterialIcons.glyphMap }) {
   return (
     <Card style={styles.headerCard}>
       <LinearGradient
@@ -13,8 +13,8 @@ function Header() {
         end={{ x: 1.1, y: 0.5 }}
         style={styles.gradient}
       >
-        <MaterialIcons name="feedback" size={28} color={"white"} />
-        <Text style={styles.headerTitle}>Feedback</Text>
+        <MaterialIcons name={props.icon} size={28} color={"white"} />
+        <Text style={styles.headerTitle}>{props.title}</Text>
       </LinearGradient> 
     </Card>
   );
