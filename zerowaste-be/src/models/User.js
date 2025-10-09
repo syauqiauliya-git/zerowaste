@@ -6,15 +6,15 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Username harus diisi'],
     unique: true
   },
-  password_hash: {
-    type: String,
-    required: [true, 'Password harus diisi']
-  },
   email: {
     type: String,
     required: [true, 'Email harus diisi'],
     unique: true,
     lowercase: true
+  },
+  password_hash: {
+    type: String,
+    required: [true, 'Password harus diisi']
   },
   number: {
     type: String,
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['teacher', 'student', 'admin'],
-    default: 'teacher'
+    required: true
   },
   is_active: {
     type: Boolean,

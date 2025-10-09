@@ -4,8 +4,8 @@ import User from '../models/User.js';
 import Teacher from '../models/Teacher.js';
 import AppError from '../utils/AppError.js';
 
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const signToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   });
 };
@@ -13,7 +13,12 @@ const signToken = (id) => {
 // REGISTER
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password, number, school_id } = req.body;
+    const { name, email, password, number, school_id, role } = req.body;
+
+    const validRoles = ['teacher', 'student', 'admin'];
+    if (!validRoles.includes(role)) {
+      return next(new AppError('Role tidak valid. Gunakan teacher, student, atau admin.', 400));
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -27,24 +32,32 @@ export const register = async (req, res, next) => {
       email,
       password_hash: hashedPassword,
       number,
-      role: 'teacher',
+      role,
       is_active: true
     });
 
-    const teacher = await Teacher.create({
-      name,
-      user_id: user._id,
-      school_id
-    });
+    let teacher = null;
 
-    const token = signToken(user._id);
+    if (role === 'teacher') {
+      if (!school_id) {
+        return next(new AppError('school_id diperlukan untuk role teacher', 400));
+      }
+
+      teacher = await Teacher.create({
+        name,
+        user_id: user._id,
+        school_id
+      });
+    }
+
+    const token = signToken(user._id, role);
 
     res.status(201).json({
       message: 'Registrasi berhasil',
       user_id: user._id,
-      teacher_id: teacher._id,
-      name: teacher.name,
+      role: user.role,
       email: user.email,
+      ...(teacher && { teacher_id: teacher._id, name: teacher.name, school_id }),
       token
     });
   } catch (err) {
@@ -75,7 +88,7 @@ export const login = async (req, res, next) => {
       teacher = await Teacher.findOne({ user_id: user._id });
     }
 
-    const token = signToken(user._id);
+    const token = signToken(user._id, user.role);
 
     res.status(200).json({
       message: 'Login berhasil',

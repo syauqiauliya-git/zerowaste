@@ -26,3 +26,12 @@ export const protect = async (req, res, next) => {
     next(new AppError('Token tidak valid atau kadaluarsa', 401));
   }
 };
+
+export const restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('Anda tidak memiliki izin untuk melakukan aksi ini', 403));
+    }
+    next();
+  };
+};

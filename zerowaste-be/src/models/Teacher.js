@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 
 const teacherSchema = new mongoose.Schema({
-  teacher_id: {
-    type: Number,
-    unique: true,
-    sparse: true
-  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
