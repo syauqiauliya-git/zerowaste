@@ -1,35 +1,22 @@
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@react-navigation/elements';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import API_BASE_URL from '@/constants/api';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchSchools } from '@/store/schoolSlice';
 
 export default function SchoolsScreen() {
   const router = useRouter();
-  const [schools, setSchools] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchSchools = async () => {
-    try {
-      console.log('Fetching schools from:', API_BASE_URL);
-      const response = await fetch(`${API_BASE_URL}/schools`);
-      const data = await response.json();
-      console.log('Schools fetched:', data.data.schools);
-      setSchools(data.data.schools);
-    } catch (error) {
-      console.error('Failed to fetch schools:', error);
-    }
-  };
+  const dispatch = useAppDispatch();
+  const { schools, loading } = useAppSelector((state) => state.schools);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchSchools();
-    setRefreshing(false);
+    dispatch(fetchSchools());
   };
 
   useEffect(() => {
-    fetchSchools();
-  }, []);
+    dispatch(fetchSchools());
+  }, [dispatch]);
 
   const handleSchoolPress = (schoolId: string) => {
     console.log('Navigating to school detail with ID:', schoolId);
@@ -51,11 +38,11 @@ export default function SchoolsScreen() {
   };
 
   return (
-    <ScrollView 
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+      <ScrollView 
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+        }
+      >
       <View style={styles.schoolContainer}>
         {schools.length === 0 ? (
           <View style={styles.schoolItem}>

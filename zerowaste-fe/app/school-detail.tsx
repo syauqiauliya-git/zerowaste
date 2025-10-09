@@ -4,12 +4,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useEffect, useState } from 'react';
 import API_BASE_URL from '@/constants/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { updateSchool, deleteSchool } from '@/store/schoolSlice';
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { loading } = useAppSelector((state) => state.schools);
   const [schoolDetail, setSchoolDetail] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [editData, setEditData] = useState({
     school_name: '',
     address: '',
@@ -31,25 +34,12 @@ export default function SchoolDetailScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              setIsLoading(true);
-              const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
-                method: 'DELETE',
-              });
-              
-              if (response.ok) {
-                console.log('School deleted successfully');
-                // Navigate back to previous page on success
-                router.back();
-              } else {
-                const errorData = await response.json();
-                console.error('Delete failed:', errorData);
-                alert('Failed to delete school');
-              }
+              await dispatch(deleteSchool(schoolId as string)).unwrap();
+              console.log('School deleted successfully');
+              router.back();
             } catch (error) {
               console.error('Failed to delete school:', error);
               alert('Failed to delete school');
-            } finally {
-              setIsLoading(false);
             }
           }
         }
@@ -82,28 +72,20 @@ export default function SchoolDetailScreen() {
     }
 
     try {
-      setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          school_name: editData.school_name,
-          address: editData.address,
-          jml_murid: parseInt(editData.jml_murid) || 0,
-          jml_kelas: parseInt(editData.jml_kelas) || 0,
-        }),
-      });
-      const data = await response.json();
-      console.log('Update response:', data);
-      setSchoolDetail(data.data.school);
+      const schoolData = {
+        school_name: editData.school_name,
+        address: editData.address,
+        jml_murid: parseInt(editData.jml_murid) || 0,
+        jml_kelas: parseInt(editData.jml_kelas) || 0,
+      };
+      
+      const result = await dispatch(updateSchool({ schoolId: schoolId as string, schoolData })).unwrap();
+      console.log('School updated successfully:', result);
+      setSchoolDetail(result);
       router.back();
     } catch (error) {
       console.error('Failed to update school:', error);
       alert('Failed to update school');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -172,13 +154,13 @@ export default function SchoolDetailScreen() {
           <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
             <Text style={styles.buttonText}>Delete</Text>
           </Pressable>
-          <Pressable
-            style={[styles.button, { backgroundColor: '#10B981' }, isLoading && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>{isLoading ? 'Saving...' : 'Save'}</Text>
-          </Pressable>
+           <Pressable
+             style={[styles.button, { backgroundColor: '#10B981' }, loading && styles.buttonDisabled]}
+             onPress={handleSave}
+             disabled={loading}
+           >
+             <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save'}</Text>
+           </Pressable>
         </View>
       </View>
     </ScrollView>

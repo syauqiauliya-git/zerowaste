@@ -2,6 +2,8 @@ import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 import { MaterialIcons } from '@expo/vector-icons';
+import { Provider } from 'react-redux';
+import { store } from '../store/store';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -11,7 +13,8 @@ export default function RootLayout() {
   };
 
   return (
-    <Stack>
+    <Provider store={store}>
+      <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen 
@@ -52,6 +55,7 @@ export default function RootLayout() {
           headerTintColor: '#fff',
         }}
       />
-    </Stack>
+      </Stack>
+    </Provider>
   );
 }
