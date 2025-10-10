@@ -1,13 +1,9 @@
 import mongoose from 'mongoose';
 
 const classSchema = new mongoose.Schema({
-  class_id: {
-    type: Number,
-    unique: true,
-    required: true
-  },
   school_id: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
     required: [true, 'School ID harus ada']
   },
   class_name: {
