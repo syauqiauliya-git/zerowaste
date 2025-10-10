@@ -15,10 +15,18 @@ dotenv.config();
 const app = express();
 
 // Basic Middleware
+const allowAllOrigins = process.env.NODE_ENV !== 'production';
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: allowAllOrigins ? true : (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']),
   credentials: true
 }));
+// Handle CORS preflight for all routes
+app.options('*', cors());
+// Simple request logger (dev aid)
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 app.use(express.json({ limit: '10kb' })); 
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
@@ -45,7 +53,8 @@ const PORT = process.env.PORT || 5000;
 
 // Connect to DB, then start the Express server
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  // Bind to 0.0.0.0 to allow access from LAN (physical devices)
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`
   🚀 ZeroWaste Backend Server Started!
   📍 Port: ${PORT}

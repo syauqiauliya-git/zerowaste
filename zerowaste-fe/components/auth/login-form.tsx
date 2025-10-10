@@ -13,6 +13,7 @@ import {
 import { router } from 'expo-router'
 import { AuthHeader } from '@/components/ui/auth-header'
 import { Colors } from '@/constants/theme'
+import { loginApi } from '@/lib/auth'
 
 
 const DUMMY_EMAIL = 'demo@zerowaste.test'
@@ -28,12 +29,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
 	const [role, setRole] = useState('')
 	const [roleOpen, setRoleOpen] = useState(false)
 	const [rememberMe, setRememberMe] = useState(false)
-	const roles = ['Individual', 'Business', 'Organization', 'Student'] // example
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const roles = ['Teacher', 'Student', 'SPPG', 'Government']
 
-	const handleSubmit = () => {
-		const isValid = email.trim().toLowerCase() === DUMMY_EMAIL && password === DUMMY_PASSWORD
-		if (isValid) {
+	const handleSubmit = async () => {
+		try {
+			setLoading(true)
+			setError(null)
+			await loginApi({ email: email.trim(), password })
+			// TODO: store token if needed (SecureStore/AsyncStorage)
 			router.replace('/(tabs)')
+		} catch (e: any) {
+			setError(e?.message || 'Login failed')
+		} finally {
+			setLoading(false)
 		}
 	}
 
@@ -44,6 +54,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
 
 						<View style={styles.formBox}>
 						<Text style={styles.title}>Login to your Account</Text>
+							{error ? <Text style={styles.errorText}>{error}</Text> : null}
 
 						<View style={styles.fieldGroup}>
 							<Text style={styles.label}>Email</Text>
@@ -117,8 +128,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
 							<Text style={styles.rememberText}>Remember me</Text>
 						</Pressable>
 
-						<TouchableOpacity activeOpacity={0.85} style={styles.submitButton} onPress={handleSubmit}>
-							<Text style={styles.submitText}>SIGN IN</Text>
+						<TouchableOpacity activeOpacity={0.85} style={[styles.submitButton, loading && { opacity: 0.7 }]} onPress={handleSubmit} disabled={loading}>
+							<Text style={styles.submitText}>{loading ? 'SIGNING IN...' : 'SIGN IN'}</Text>
 						</TouchableOpacity>
 
 						<View style={{ alignItems: 'center', marginTop: 16 }}>
@@ -256,6 +267,12 @@ const styles = StyleSheet.create({
 		marginTop: 2,
 		color: Colors.light.secondary,
 		fontWeight: '700',
+	},
+	errorText: {
+		color: '#b91c1c', // red-700
+		marginBottom: 8,
+		fontSize: 13,
+		fontWeight: '600',
 	},
 })
 
