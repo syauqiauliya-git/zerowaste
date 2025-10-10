@@ -1,4 +1,5 @@
 import Class from '../models/Class.js';
+import School from '../models/School.js';
 import AppError from '../utils/AppError.js';
 
 // GET semua kelas
@@ -25,14 +26,13 @@ export const getClassById = async (req, res, next) => {
 // POST tambah kelas
 export const createClass = async (req, res, next) => {
   try {
-    const { class_id, school_id, class_name, grade_level } = req.body;
+    const { school_id, class_name, grade_level } = req.body;
 
-    if (!class_id || !school_id || !class_name || !grade_level) {
+    if (!school_id || !class_name || !grade_level) {
       return next(new AppError('Semua field harus diisi', 400));
     }
 
     const kelas = await Class.create({
-      class_id,
       school_id,
       class_name,
       grade_level
