@@ -30,34 +30,41 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 	const [error, setError] = useState<string | null>(null)
 	const roles = ['Teacher', 'Student', 'SPPG', 'Government']
 
+	// Map visible role labels to backend-accepted values
+	// Backend expects: 'teacher' | 'student' | 'admin'
+	const roleMap: Record<string, string> = {
+		Teacher: 'teacher',
+		Student: 'student',
+		Admin: 'admin',
+	}
+	const selectedBackendRole = role ? (roleMap[role] || 'teacher') : 'teacher'
+
 	const handleSubmit = async () => {
 		try {
 			setLoading(true)
 			setError(null)
 
-			// Validate sekolah_id as MongoDB ObjectId (24 hex chars)
+			// Validate sekolah_id only when role is teacher
 			const trimmedSekolah = sekolahId.trim()
-			const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSekolah)
-			if (!isValidObjectId) {
-				setError('Sekolah ID harus berupa ObjectId 24 karakter hexadecimal (mis. 6522a4ab0b83f5a8ab123456)')
-				return
+			if (selectedBackendRole === 'teacher') {
+				const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSekolah)
+				if (!isValidObjectId) {
+					setError('Sekolah ID harus berupa ObjectId 24 karakter hexadecimal (mis. 6522a4ab0b83f5a8ab123456)')
+					return
+				}
 			}
 
-			// Map visible role labels to backend values if needed
-			const roleMap: Record<string, string> = {
-				Teacher: 'guru',
-				Student: 'siswa',
-				SPPG: 'sppg',
-				Government: 'pemerintah',
-			}
-			const backendRole = role ? (roleMap[role] || 'guru') : 'guru'
-			await registerApi({
-				nama: fullName,
+			const backendRole = selectedBackendRole
+			const payload: any = {
+				name: fullName,
 				email: email.trim(),
 				password,
-				sekolah_id: trimmedSekolah,
 				role: backendRole,
-			})
+			}
+			if (backendRole === 'teacher') {
+				payload.school_id = trimmedSekolah
+			}
+			await registerApi(payload)
 			onSignIn?.()
 		} catch (e: any) {
 			setError(e?.message || 'Register failed')
@@ -95,21 +102,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 							</View>
 						</View>
 
-						{/* Sekolah ID */}
-						<View style={styles.fieldGroup}>
-							<Text style={styles.label}>Sekolah ID</Text>
-							<View style={styles.inputWrapper}>
-								<Ionicons name="school-outline" size={20} color="#6b7280" style={styles.icon} />
-								<TextInput
-									value={sekolahId}
-									onChangeText={setSekolahId}
-									placeholder="Sekolah ObjectId"
-									placeholderTextColor="#9ca3af"
-									style={styles.input}
-									autoCapitalize="none"
-								/>
+						{/* School ID (only for Teacher) */}
+						{selectedBackendRole === 'teacher' && (
+							<View style={styles.fieldGroup}>
+								<Text style={styles.label}>School ID</Text>
+								<View style={styles.inputWrapper}>
+									<Ionicons name="school-outline" size={20} color="#6b7280" style={styles.icon} />
+									<TextInput
+										value={sekolahId}
+										onChangeText={setSekolahId}
+										placeholder="Mongo ObjectId (24 hex)"
+										placeholderTextColor="#9ca3af"
+										style={styles.input}
+										autoCapitalize="none"
+									/>
+								</View>
 							</View>
-						</View>
+						)}
 
 						<View style={styles.fieldGroup}>
 							<Text style={styles.label}>Email</Text>
