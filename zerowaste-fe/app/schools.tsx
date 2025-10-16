@@ -3,7 +3,7 @@ import { Text } from '@react-navigation/elements';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchSchools } from '@/store/schoolSlice';
+import { fetchSchools, School } from '@/store/slices/schoolSlice';
 
 export default function SchoolsScreen() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function SchoolsScreen() {
 
   const onRefresh = async () => {
     dispatch(fetchSchools());
+    console.log('Refreshing schools: ', schools);
   };
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function SchoolsScreen() {
     });
   };
 
-  const renderSchoolItem = ({ item }: { item: { _id: string; school_name: string; address: string } }) => {
+  const renderSchoolItem = ({ item }: { item: School }) => {
     return (
       <Pressable style={styles.schoolItem} onPress={() => handleSchoolPress(item._id)}>
         <Text style={{ fontWeight: 'bold' }}>{item.school_name}</Text>
@@ -45,7 +46,7 @@ export default function SchoolsScreen() {
       >
       <View style={styles.schoolContainer}>
         {schools.length === 0 ? (
-          <View style={styles.schoolItem}>
+          <View key="no-schools" style={styles.schoolItem}>
             <Text>No schools found</Text>
           </View>
         ) : (

@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { sendFeedback } from "@/store/actions/feedback";
+import { sendFeedback } from "@/lib/feedback";
 
 function FeedbackForm() {
   const [isLoading, setIsLoading] = useState(false);

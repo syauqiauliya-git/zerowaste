@@ -3,9 +3,9 @@ import { Text } from '@react-navigation/elements';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useEffect, useState } from 'react';
-import API_BASE_URL from '@/constants/api';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { updateSchool, deleteSchool } from '@/store/schoolSlice';
+import { updateSchool, deleteSchool } from '@/store/slices/schoolSlice';
+import { fetchSchoolDetail } from '@/lib/school';
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
@@ -47,12 +47,15 @@ export default function SchoolDetailScreen() {
     );
   };
 
-  const fetchSchoolDetail = async () => {
+  const fetchSchoolDetailData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`);
-      const data = await response.json();
-      console.log('School detail response:', data.data.school);
-      const school = data.data.school;
+      if (!schoolId) {
+        console.error('School ID is required');
+        return;
+      }
+      
+      const school = await fetchSchoolDetail(schoolId as string);
+      console.log('School detail response:', school);
       setSchoolDetail(school);
       setEditData({
         school_name: school.school_name || '',
@@ -91,7 +94,7 @@ export default function SchoolDetailScreen() {
 
 
   useEffect(() => {
-    fetchSchoolDetail();
+    fetchSchoolDetailData();
   }, [schoolId]);
 
   return (
