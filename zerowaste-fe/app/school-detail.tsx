@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateSchool, deleteSchool } from '@/store/slices/schoolSlice';
 import { fetchSchoolDetail } from '@/lib/school';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
@@ -53,7 +54,7 @@ export default function SchoolDetailScreen() {
         console.error('School ID is required');
         return;
       }
-      
+
       const school = await fetchSchoolDetail(schoolId as string);
       console.log('School detail response:', school);
       setSchoolDetail(school);
@@ -81,7 +82,7 @@ export default function SchoolDetailScreen() {
         jml_murid: parseInt(editData.jml_murid) || 0,
         jml_kelas: parseInt(editData.jml_kelas) || 0,
       };
-      
+
       const result = await dispatch(updateSchool({ schoolId: schoolId as string, schoolData })).unwrap();
       console.log('School updated successfully:', result);
       setSchoolDetail(result);
@@ -143,27 +144,36 @@ export default function SchoolDetailScreen() {
               keyboardType="numeric"
             />
           </View>
-           <View style={styles.infoRow}>
-             <Text style={styles.label}>Created At:</Text>
-             <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleString() : '-'}</Text>
-           </View>
-           <View style={styles.infoRow}>
-             <Text style={styles.label}>Updated At:</Text>
-             <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleString() : '-'}</Text>
-           </View>
-        </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Created At:</Text>
+            <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleString() : '-'}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Updated At:</Text>
+            <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleString() : '-'}</Text>
+          </View>
 
-        <View style={styles.sectionButtons}>
-          <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
-            <Text style={styles.buttonText}>Delete</Text>
-          </Pressable>
-           <Pressable
-             style={[styles.button, { backgroundColor: '#10B981' }, loading && styles.buttonDisabled]}
-             onPress={handleSave}
-             disabled={loading}
-           >
-             <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save'}</Text>
-           </Pressable>
+          <View style={styles.sectionButtons}>
+            <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
+              <Text style={styles.buttonText}>Delete</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, { backgroundColor: '#10B981' }, loading && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save'}</Text>
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.section}>
+          <View style={styles.classHeader}>
+            <Text style={styles.sectionTitle}>Classes</Text>
+            <Pressable>
+              <MaterialIcons name="add" size={24} color="#10B981" />
+            </Pressable>
+          </View>
+
         </View>
       </View>
     </ScrollView>
@@ -213,6 +223,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#111827',
+    marginLeft: 8
   },
   input: {
     flex: 1,
@@ -247,17 +258,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   sectionButtons: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    paddingTop: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 16,
@@ -281,4 +282,9 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.7,
   },
+  classHeader: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  }
 });

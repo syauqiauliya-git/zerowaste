@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSchools, School } from '@/store/slices/schoolSlice';
+import { getToken } from '@/lib/auth-storage';
 
 export default function SchoolsScreen() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function SchoolsScreen() {
 
   useEffect(() => {
     dispatch(fetchSchools());
+    getToken().then(token => {
+        console.log('JWT Token (school):', token);
+      });
   }, [dispatch]);
 
   const handleSchoolPress = (schoolId: string) => {

@@ -1,4 +1,5 @@
 import { apiFetch } from './api'
+import { removeToken } from './auth-storage'
 
 export type LoginResponse = {
   token: string
@@ -32,4 +33,8 @@ export async function registerApi(payload: {
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export async function logout() {
+  await removeToken()
 }

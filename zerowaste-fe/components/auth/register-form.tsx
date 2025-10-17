@@ -13,6 +13,7 @@ import {
 import { AuthHeader } from '@/components/ui/auth-header'
 import { Colors } from '@/constants/theme'
 import { registerApi } from '@/lib/auth'
+import { saveToken } from '@/lib/auth-storage'
 
 type RegisterFormProps = {
 	onSignIn?: () => void
@@ -28,7 +29,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 	const [sekolahId, setSekolahId] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const roles = ['Teacher', 'Student', 'SPPG', 'Government']
+	const roles = ['Teacher', 'Student', 'Admin']
 
 	// Map visible role labels to backend-accepted values
 	// Backend expects: 'teacher' | 'student' | 'admin'
@@ -64,7 +65,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 			if (backendRole === 'teacher') {
 				payload.school_id = trimmedSekolah
 			}
-			await registerApi(payload)
+			const response = await registerApi(payload)
+			await saveToken(response.token)
 			onSignIn?.()
 		} catch (e: any) {
 			setError(e?.message || 'Register failed')

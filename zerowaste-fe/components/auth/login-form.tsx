@@ -14,6 +14,7 @@ import { router } from 'expo-router'
 import { AuthHeader } from '@/components/ui/auth-header'
 import { Colors } from '@/constants/theme'
 import { loginApi } from '@/lib/auth'
+import { saveToken } from '@/lib/auth-storage'
 
 
 const DUMMY_EMAIL = 'demo@zerowaste.test'
@@ -31,15 +32,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
 	const [rememberMe, setRememberMe] = useState(false)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const roles = ['Teacher', 'Student', 'SPPG', 'Government']
+	const roles = ['Teacher', 'Student', 'Admin']
 
 	const handleSubmit = async () => {
 		try {
 			setLoading(true)
 			setError(null)
-			await loginApi({ email: email.trim(), password })
-			// TODO: store token if needed (SecureStore/AsyncStorage)
-			router.replace('/(tabs)')
+			const response = await loginApi({ email: email.trim(), password })
+			await saveToken(response.token)
+			router.replace('/(tabs)/home')
 		} catch (e: any) {
 			setError(e?.message || 'Login failed')
 		} finally {
