@@ -1,17 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchSchools as apiFetchSchools, createSchool as apiCreateSchool, updateSchool as apiUpdateSchool, deleteSchool as apiDeleteSchool } from '@/lib/school';
-
-export interface School {
-  _id: string;
-  school_name: string;
-  address: string;
-  jml_murid: number;
-  jml_kelas: number;
-  is_active: boolean;
-  created_at: string;
-  updatedAt: string;
-  __v: number;
-}
+import { School, fetchSchools as apiFetchSchools, createSchool as apiCreateSchool, updateSchool as apiUpdateSchool, deleteSchool as apiDeleteSchool } from '@/lib/school';
 
 interface SchoolState {
   schools: School[];

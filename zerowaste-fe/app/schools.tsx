@@ -3,8 +3,8 @@ import { Text } from '@react-navigation/elements';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchSchools, School } from '@/store/slices/schoolSlice';
-import { getToken } from '@/lib/auth-storage';
+import { fetchSchools } from '@/store/slices/schoolSlice';
+import { School } from '@/lib/school';
 
 export default function SchoolsScreen() {
   const router = useRouter();

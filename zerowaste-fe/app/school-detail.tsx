@@ -13,8 +13,8 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateSchool, deleteSchool } from "@/store/slices/schoolSlice";
 import { fetchSchoolDetail } from "@/lib/school";
-import { MaterialIcons } from "@expo/vector-icons";
 import { getRole } from "@/lib/auth-storage";
+import ClassesSection from "@/components/schools/classes";
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
@@ -29,10 +29,6 @@ export default function SchoolDetailScreen() {
     jml_murid: "",
     jml_kelas: "",
   });
-  
-  const handleAddClass = () => {
-    router.push('/class-create');
-  };
 
   const handleDelete = async () => {
     Alert.alert(
@@ -232,16 +228,7 @@ export default function SchoolDetailScreen() {
             </View>
           )}
         </View>
-        <View style={styles.section}>
-          <View style={styles.classHeader}>
-            <Text style={styles.sectionTitle}>Classes</Text>
-            {role !== "student" && (
-              <Pressable onPress={handleAddClass}>
-                <MaterialIcons name="add" size={24} color="#10B981" />
-              </Pressable>
-            )}
-          </View>
-        </View>
+        <ClassesSection schoolId={schoolId as string} />
       </View>
     </ScrollView>
   );
