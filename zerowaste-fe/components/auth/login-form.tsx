@@ -39,7 +39,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
 			setLoading(true)
 			setError(null)
 			const response = await loginApi({ email: email.trim(), password })
-			await saveToken(response.token)
+			await saveToken(response.token, response.role)
 			router.replace('/(tabs)/home')
 		} catch (e: any) {
 			setError(e?.message || 'Login failed')

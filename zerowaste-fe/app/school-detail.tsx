@@ -1,12 +1,20 @@
-import { Alert, Button, Pressable, ScrollView, StyleSheet, View, TextInput } from 'react-native';
-import { Text } from '@react-navigation/elements';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import Header from '@/components/ui/header';
-import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { updateSchool, deleteSchool } from '@/store/slices/schoolSlice';
-import { fetchSchoolDetail } from '@/lib/school';
-import { MaterialIcons } from '@expo/vector-icons';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  TextInput,
+} from "react-native";
+import { Text } from "@react-navigation/elements";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import Header from "@/components/ui/header";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateSchool, deleteSchool } from "@/store/slices/schoolSlice";
+import { fetchSchoolDetail } from "@/lib/school";
+import { MaterialIcons } from "@expo/vector-icons";
+import { getRole } from "@/lib/auth-storage";
 
 export default function SchoolDetailScreen() {
   const { schoolId } = useLocalSearchParams();
@@ -14,12 +22,17 @@ export default function SchoolDetailScreen() {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.schools);
   const [schoolDetail, setSchoolDetail] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [editData, setEditData] = useState({
-    school_name: '',
-    address: '',
-    jml_murid: '',
-    jml_kelas: '',
+    school_name: "",
+    address: "",
+    jml_murid: "",
+    jml_kelas: "",
   });
+  
+  const handleAddClass = () => {
+    router.push('/class-create');
+  };
 
   const handleDelete = async () => {
     Alert.alert(
@@ -28,7 +41,7 @@ export default function SchoolDetailScreen() {
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "Delete",
@@ -36,14 +49,14 @@ export default function SchoolDetailScreen() {
           onPress: async () => {
             try {
               await dispatch(deleteSchool(schoolId as string)).unwrap();
-              console.log('School deleted successfully');
+              console.log("School deleted successfully");
               router.back();
             } catch (error) {
-              console.error('Failed to delete school:', error);
-              alert('Failed to delete school');
+              console.error("Failed to delete school:", error);
+              alert("Failed to delete school");
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -51,27 +64,32 @@ export default function SchoolDetailScreen() {
   const fetchSchoolDetailData = async () => {
     try {
       if (!schoolId) {
-        console.error('School ID is required');
+        console.error("School ID is required");
         return;
       }
 
       const school = await fetchSchoolDetail(schoolId as string);
-      console.log('School detail response:', school);
+      console.log("School detail response:", school);
       setSchoolDetail(school);
       setEditData({
-        school_name: school.school_name || '',
-        address: school.address || '',
-        jml_murid: school.jml_murid?.toString() || '',
-        jml_kelas: school.jml_kelas?.toString() || '',
+        school_name: school.school_name || "",
+        address: school.address || "",
+        jml_murid: school.jml_murid?.toString() || "",
+        jml_kelas: school.jml_kelas?.toString() || "",
       });
     } catch (error) {
-      console.error('Failed to fetch school detail:', error);
+      console.error("Failed to fetch school detail:", error);
     }
   };
 
   const handleSave = async () => {
-    if (!editData.school_name.trim() || !editData.address.trim() || !editData.jml_murid.trim() || !editData.jml_kelas.trim()) {
-      alert('Please fill in all required fields');
+    if (
+      !editData.school_name.trim() ||
+      !editData.address.trim() ||
+      !editData.jml_murid.trim() ||
+      !editData.jml_kelas.trim()
+    ) {
+      alert("Please fill in all required fields");
       return;
     }
 
@@ -83,19 +101,24 @@ export default function SchoolDetailScreen() {
         jml_kelas: parseInt(editData.jml_kelas) || 0,
       };
 
-      const result = await dispatch(updateSchool({ schoolId: schoolId as string, schoolData })).unwrap();
-      console.log('School updated successfully:', result);
+      const result = await dispatch(
+        updateSchool({ schoolId: schoolId as string, schoolData })
+      ).unwrap();
+      console.log("School updated successfully:", result);
       setSchoolDetail(result);
       router.back();
     } catch (error) {
-      console.error('Failed to update school:', error);
-      alert('Failed to update school');
+      console.error("Failed to update school:", error);
+      alert("Failed to update school");
     }
   };
 
-
   useEffect(() => {
     fetchSchoolDetailData();
+    getRole().then((role) => {
+      console.log("Role:", role);
+      setRole(role);
+    });
   }, [schoolId]);
 
   return (
@@ -107,73 +130,117 @@ export default function SchoolDetailScreen() {
           <Text style={styles.sectionTitle}>School Information</Text>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Name:</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.school_name}
-              onChangeText={(text) => setEditData({ ...editData, school_name: text })}
-              placeholder="Enter school name"
-            />
+            {role !== "admin" ? (
+              <Text style={styles.value}>{editData.school_name}</Text>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={editData.school_name}
+                onChangeText={(text) =>
+                  setEditData({ ...editData, school_name: text })
+                }
+                placeholder="Enter school name"
+              />
+            )}
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Address:</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.address}
-              onChangeText={(text) => setEditData({ ...editData, address: text })}
-              placeholder="Enter address"
-              multiline
-            />
+            {role !== "admin" ? (
+              <Text style={styles.value}>{editData.address}</Text>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={editData.address}
+                onChangeText={(text) =>
+                  setEditData({ ...editData, address: text })
+                }
+                placeholder="Enter address"
+                multiline
+              />
+            )}
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Number of Students:</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.jml_murid}
-              onChangeText={(text) => setEditData({ ...editData, jml_murid: text })}
-              placeholder="Enter number of students"
-              keyboardType="numeric"
-            />
+            {role !== "admin" ? (
+              <Text style={styles.value}>{editData.jml_murid}</Text>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={editData.jml_murid}
+                onChangeText={(text) =>
+                  setEditData({ ...editData, jml_murid: text })
+                }
+                placeholder="Enter number of students"
+                keyboardType="numeric"
+              />
+            )}
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Number of Classes:</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.jml_kelas}
-              onChangeText={(text) => setEditData({ ...editData, jml_kelas: text })}
-              placeholder="Enter number of classes"
-              keyboardType="numeric"
-            />
+            {role !== "admin" ? (
+              <Text style={styles.value}>{editData.jml_kelas}</Text>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={editData.jml_kelas}
+                onChangeText={(text) =>
+                  setEditData({ ...editData, jml_kelas: text })
+                }
+                placeholder="Enter number of classes"
+                keyboardType="numeric"
+              />
+            )}
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Created At:</Text>
-            <Text style={styles.value}>{schoolDetail?.created_at ? new Date(schoolDetail.created_at).toLocaleString() : '-'}</Text>
+            <Text style={styles.value}>
+              {schoolDetail?.created_at
+                ? new Date(schoolDetail.created_at).toLocaleString()
+                : "-"}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Updated At:</Text>
-            <Text style={styles.value}>{schoolDetail?.updatedAt ? new Date(schoolDetail.updatedAt).toLocaleString() : '-'}</Text>
+            <Text style={styles.value}>
+              {schoolDetail?.updatedAt
+                ? new Date(schoolDetail.updatedAt).toLocaleString()
+                : "-"}
+            </Text>
           </View>
 
-          <View style={styles.sectionButtons}>
-            <Pressable style={[styles.button, { backgroundColor: '#EF4444' }]} onPress={handleDelete} >
-              <Text style={styles.buttonText}>Delete</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, { backgroundColor: '#10B981' }, loading && styles.buttonDisabled]}
-              onPress={handleSave}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save'}</Text>
-            </Pressable>
-          </View>
+          {role === "admin" && (
+            <View style={styles.sectionButtons}>
+              <Pressable
+                style={[styles.button, { backgroundColor: "#EF4444" }]}
+                onPress={handleDelete}
+              >
+                <Text style={styles.buttonText}>Delete</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.button,
+                  { backgroundColor: "#10B981" },
+                  loading && styles.buttonDisabled,
+                ]}
+                onPress={handleSave}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? "Saving..." : "Save"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
         <View style={styles.section}>
           <View style={styles.classHeader}>
             <Text style={styles.sectionTitle}>Classes</Text>
-            <Pressable>
-              <MaterialIcons name="add" size={24} color="#10B981" />
-            </Pressable>
+            {role !== "student" && (
+              <Pressable onPress={handleAddClass}>
+                <MaterialIcons name="add" size={24} color="#10B981" />
+              </Pressable>
+            )}
           </View>
-
         </View>
       </View>
     </ScrollView>
@@ -191,10 +258,10 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 10,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -205,79 +272,79 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
-    color: '#059669',
+    color: "#059669",
   },
   infoRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 12,
   },
   label: {
     width: 80,
     fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    color: "#6B7280",
+    fontWeight: "500",
   },
   value: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
-    marginLeft: 8
+    color: "#111827",
+    marginLeft: 8,
   },
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
+    color: "#111827",
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 6,
     padding: 8,
     marginLeft: 8,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
   },
   statBox: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderRadius: 8,
     minWidth: 120,
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#059669',
+    fontWeight: "bold",
+    color: "#059669",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   sectionButtons: {
     paddingTop: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 16,
   },
   button: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -286,5 +353,5 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-  }
+  },
 });

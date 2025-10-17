@@ -18,9 +18,6 @@ export default function SchoolsScreen() {
 
   useEffect(() => {
     dispatch(fetchSchools());
-    getToken().then(token => {
-        console.log('JWT Token (school):', token);
-      });
   }, [dispatch]);
 
   const handleSchoolPress = (schoolId: string) => {
