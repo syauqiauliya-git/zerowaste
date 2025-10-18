@@ -1,20 +1,20 @@
 import { Class } from "@/lib/class";
 import { getRole } from "@/lib/auth-storage";
-import { fetchClassesBySchoolId } from '@/store/slices/classSlice';
+import { fetchClassesBySchoolId } from "@/store/slices/classSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-function ClassesSection({ schoolId }: { schoolId: string }) {
+function ClassesSection({ schoolId, classCount }: { schoolId: string; classCount: string }) {
   const [role, setRole] = useState<string | null>(null);
   const { classes, loading } = useAppSelector((state) => state.classes);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
   const handleAddClass = () => {
-    router.push("/class-create");
+    router.push({ pathname: "/class-create", params: { schoolId: schoolId } });
   };
 
   const handleClassPress = (classId: string) => {
@@ -28,11 +28,11 @@ function ClassesSection({ schoolId }: { schoolId: string }) {
   };
 
   useEffect(() => {
-      dispatch(fetchClassesBySchoolId(schoolId));
-      getRole().then((role) => {
-        setRole(role);
-      });
-    }, [dispatch, schoolId]);
+    dispatch(fetchClassesBySchoolId(schoolId));
+    getRole().then((role) => {
+      setRole(role);
+    });
+  }, [dispatch, schoolId]);
 
   const renderClassItem = ({ item }: { item: Class }) => {
     return (
@@ -41,7 +41,9 @@ function ClassesSection({ schoolId }: { schoolId: string }) {
         onPress={() => handleClassPress(item._id)}
       >
         <Text style={{ fontWeight: "bold" }}>{item.class_name}</Text>
-        <Text style={{ fontWeight: "thin", fontSize: 12 }}>{item.grade_level}</Text>
+        <Text style={{ fontWeight: "thin", fontSize: 12 }}>
+          {item.grade_level}
+        </Text>
       </Pressable>
     );
   };
@@ -50,7 +52,7 @@ function ClassesSection({ schoolId }: { schoolId: string }) {
     <View style={styles.section}>
       <View style={styles.classHeader}>
         <Text style={styles.sectionTitle}>Classes</Text>
-        {role !== "student" && (
+        {(role === "admin" && classes.length < Number(classCount)) && (
           <Pressable onPress={handleAddClass}>
             <MaterialIcons name="add" size={24} color="#10B981" />
           </Pressable>

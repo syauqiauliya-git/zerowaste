@@ -30,7 +30,7 @@ export type CreateClassDto = {
 };
 
 export async function createClass(classData: CreateClassDto) {
-  return apiFetch<Class>("/api/v1/classes", {
+  return apiFetch<{status: string, data: Class}>("/api/v1/classes", {
     method: "POST",
     body: JSON.stringify(classData),
   });

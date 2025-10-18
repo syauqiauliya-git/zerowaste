@@ -67,7 +67,7 @@ export const createClass = createAsyncThunk(
   'classes/createClass',
   async (classData: { school_id: string; class_name: string; grade_level: string }) => {
     const newClass = await apiCreateClass(classData);
-    return mapApiClassToSliceClass(newClass);
+    return mapApiClassToSliceClass(newClass.data);
   }
 );
 

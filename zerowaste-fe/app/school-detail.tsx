@@ -228,7 +228,7 @@ export default function SchoolDetailScreen() {
             </View>
           )}
         </View>
-        <ClassesSection schoolId={schoolId as string} />
+        <ClassesSection schoolId={schoolId as string} classCount={editData.jml_kelas as string} />
       </View>
     </ScrollView>
   );

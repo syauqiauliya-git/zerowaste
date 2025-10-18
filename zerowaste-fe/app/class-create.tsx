@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View, Pressable, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { createSchool } from '@/store/slices/schoolSlice';
+import { createClass } from "@/store/slices/classSlice";
 
-export default function SchoolCreateScreen() {
+export default function ClassCreateScreen() {
+  const { schoolId } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.schools);
+  const { loading } = useAppSelector((state) => state.classes);
   const [className, setClassName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
 
   const handleSubmit = async () => {
     const name = className.trim();
-    const grade = className.trim();
+    const grade = gradeLevel.trim();
     if (name.length === 0 || grade.length === 0) {
       alert("Please fill in all required fields.");
       return;
@@ -22,17 +23,18 @@ export default function SchoolCreateScreen() {
     
     try {
       const classData = {
+        school_id: schoolId as string,
         class_name: className,
         grade_level: grade,
       };
 
-      console.log('School data: ', classData);
+      console.log('Class data: ', classData);
       
-      // const result = await dispatch(createSchool(classData)).unwrap();
-      // console.log('School created successfully:', result);
+      const result = await dispatch(createClass(classData)).unwrap();
+      console.log('Class created successfully:', result);
       router.back();
     } catch (error: any) {
-      console.error('Failed to create school:', error);
+      console.error('Failed to create class:', error);
       alert(error.message || "Something went wrong!");
     }
   };
@@ -74,7 +76,7 @@ export default function SchoolCreateScreen() {
 
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
-            // onPress={handleSubmit}
+            onPress={handleSubmit}
             disabled={loading}
           >
             <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create'}</Text>
