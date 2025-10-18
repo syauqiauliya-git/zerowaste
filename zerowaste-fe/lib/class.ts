@@ -20,7 +20,7 @@ export async function fetchClasses() {
 }
 
 export async function fetchClassDetail(classId: string) {
-  return apiFetch<Class>(`/api/v1/classes/${classId}`);
+  return apiFetch<{status: string; data: Class}>(`/api/v1/classes/${classId}`);
 }
 
 export type CreateClassDto = {

@@ -77,6 +77,17 @@ export default function RootLayout() {
           headerTintColor: '#fff',
         }}
       />
+      <Stack.Screen 
+        name="class-detail" 
+        options={{
+          title: 'Class Detail',
+          presentation: 'modal',
+          headerStyle: {
+            backgroundColor: '#10B981',
+          },
+          headerTintColor: '#fff',
+        }}
+      />
       </Stack>
     </Provider>
   );

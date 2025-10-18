@@ -30,33 +30,6 @@ export default function SchoolDetailScreen() {
     jml_kelas: "",
   });
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Delete School",
-      "Are you sure you want to delete this school? This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await dispatch(deleteSchool(schoolId as string)).unwrap();
-              console.log("School deleted successfully");
-              router.back();
-            } catch (error) {
-              console.error("Failed to delete school:", error);
-              alert("Failed to delete school");
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const fetchSchoolDetailData = async () => {
     try {
       if (!schoolId) {
@@ -107,6 +80,33 @@ export default function SchoolDetailScreen() {
       console.error("Failed to update school:", error);
       alert("Failed to update school");
     }
+  };
+
+  const handleDelete = async () => {
+    Alert.alert(
+      "Delete School",
+      "Are you sure you want to delete this school? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await dispatch(deleteSchool(schoolId as string)).unwrap();
+              console.log("School deleted successfully");
+              router.back();
+            } catch (error) {
+              console.error("Failed to delete school:", error);
+              alert("Failed to delete school");
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     marginBottom: 12,
+    alignItems: "center",
   },
   label: {
     width: 80,
