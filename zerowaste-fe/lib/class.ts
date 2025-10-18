@@ -42,7 +42,7 @@ export type UpdateClassDto = Partial<{
 }>;
 
 export async function updateClass(classId: string, classData: UpdateClassDto) {
-  return apiFetch<Class>(`/api/v1/classes/${classId}`, {
+  return apiFetch<{status: string; data: Class}>(`/api/v1/classes/${classId}`, {
     method: "PUT",
     body: JSON.stringify(classData),
   });

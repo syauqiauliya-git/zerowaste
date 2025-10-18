@@ -75,7 +75,8 @@ export const updateClass = createAsyncThunk(
   'classes/updateClass',
   async ({ classId, classData }: { classId: string; classData: { class_name?: string; grade_level?: string } }) => {
     const updatedClass = await apiUpdateClass(classId, classData);
-    return mapApiClassToSliceClass(updatedClass);
+    console.log('Updated class data: ', updatedClass);
+    return mapApiClassToSliceClass(updatedClass.data);
   }
 );
 

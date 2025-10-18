@@ -54,19 +54,19 @@ function ClassDetail() {
       const result = await dispatch(
         updateClass({ classId: classId as string, classData })
       ).unwrap();
-      console.log("School updated successfully:", result);
+      console.log("Class updated successfully:", result);
       setClassDetail(result);
       router.back();
     } catch (error) {
-      console.error("Failed to update school:", error);
-      alert("Failed to update school");
+      console.error("Failed to update class:", error);
+      alert("Failed to update class");
     }
   };
 
   const handleDelete = async () => {
     Alert.alert(
-      "Delete School",
-      "Are you sure you want to delete this school? This action cannot be undone.",
+      "Delete Class",
+      "Are you sure you want to delete this class? This action cannot be undone.",
       [
         {
           text: "Cancel",
@@ -78,11 +78,11 @@ function ClassDetail() {
           onPress: async () => {
             try {
               await dispatch(deleteClass(classId as string)).unwrap();
-              console.log("School deleted successfully");
+              console.log("Class deleted successfully");
               router.back();
             } catch (error) {
-              console.error("Failed to delete school:", error);
-              alert("Failed to delete school");
+              console.error("Failed to delete class:", error);
+              alert("Failed to delete class");
             }
           },
         },
