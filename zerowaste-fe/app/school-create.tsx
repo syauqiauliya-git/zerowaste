@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, View, Pressable, KeyboardAvoidingView, Pla
 import { useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { createSchool } from '@/store/schoolSlice';
+import { createSchool } from '@/store/slices/schoolSlice';
 
 export default function SchoolCreateScreen() {
   const router = useRouter();
@@ -29,6 +29,8 @@ export default function SchoolCreateScreen() {
         jml_murid: parseInt(studentCount) || 0,
         jml_kelas: parseInt(classCount) || 0,
       };
+
+      console.log('School data: ', schoolData);
       
       const result = await dispatch(createSchool(schoolData)).unwrap();
       console.log('School created successfully:', result);

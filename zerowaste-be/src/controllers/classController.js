@@ -12,6 +12,30 @@ export const getAllClasses = async (req, res, next) => {
   }
 };
 
+// GET kelas berdasarkan sekolah
+export const getClassesBySchoolId = async (req, res, next) => {
+  try {
+    const { schoolId } = req.params;
+    
+    // Verify that the school exists
+    const school = await School.findById(schoolId);
+    if (!school) {
+      return next(new AppError('Sekolah tidak ditemukan', 404));
+    }
+
+    // Get all classes for this school
+    const classes = await Class.find({ school_id: schoolId }).populate('school_id', 'school_name');
+    
+    res.status(200).json({
+      status: 'success',
+      results: classes.length,
+      data: classes
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET detail kelas
 export const getClassById = async (req, res, next) => {
   try {

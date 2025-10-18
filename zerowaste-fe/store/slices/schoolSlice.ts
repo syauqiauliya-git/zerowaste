@@ -1,17 +1,5 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import API_BASE_URL from '@/constants/api';
-
-export interface School {
-  _id: string;
-  school_name: string;
-  address: string;
-  jml_murid: number;
-  jml_kelas: number;
-  is_active: boolean;
-  created_at: string;
-  updatedAt: string;
-  __v: number;
-}
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { School, fetchSchools as apiFetchSchools, createSchool as apiCreateSchool, updateSchool as apiUpdateSchool, deleteSchool as apiDeleteSchool } from '@/lib/school';
 
 interface SchoolState {
   schools: School[];
@@ -25,52 +13,48 @@ const initialState: SchoolState = {
   error: null,
 };
 
+// Helper function to map API school to slice school format
+const mapApiSchoolToSliceSchool = (apiSchool: any): School => ({
+  _id: apiSchool._id, // MongoDB uses _id, not id
+  school_name: apiSchool.school_name,
+  address: apiSchool.address,
+  jml_murid: apiSchool.jml_murid,
+  jml_kelas: apiSchool.jml_kelas,
+  is_active: apiSchool.is_active || true, // Use API value or default
+  created_at: apiSchool.created_at || new Date().toISOString(), // Use API value or default
+  updatedAt: apiSchool.updatedAt || new Date().toISOString(), // Use API value or default
+  __v: apiSchool.__v || 0, // Use API value or default
+});
+
 // Async thunks for API calls
 export const fetchSchools = createAsyncThunk(
   'schools/fetchSchools',
   async () => {
-    const response = await fetch(`${API_BASE_URL}/schools`);
-    const data = await response.json();
-    return data.data.schools;
+    const schools = await apiFetchSchools();
+    return schools.map(mapApiSchoolToSliceSchool);
   }
 );
 
 export const createSchool = createAsyncThunk(
   'schools/createSchool',
   async (schoolData: { school_name: string; address: string; jml_murid: number; jml_kelas: number }) => {
-    const response = await fetch(`${API_BASE_URL}/schools`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(schoolData),
-    });
-    const data = await response.json();
-    return data.data.school;
+    const school = await apiCreateSchool(schoolData);
+    return mapApiSchoolToSliceSchool(school);
   }
 );
 
 export const updateSchool = createAsyncThunk(
   'schools/updateSchool',
   async ({ schoolId, schoolData }: { schoolId: string; schoolData: { school_name: string; address: string; jml_murid: number; jml_kelas: number } }) => {
-    const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(schoolData),
-    });
-    const data = await response.json();
-    return data.data.school;
+    const school = await apiUpdateSchool(schoolId, schoolData);
+    return mapApiSchoolToSliceSchool(school);
   }
 );
 
 export const deleteSchool = createAsyncThunk(
   'schools/deleteSchool',
   async (schoolId: string) => {
-    const response = await fetch(`${API_BASE_URL}/schools/${schoolId}`, {
-      method: 'DELETE',
-    });
+    await apiDeleteSchool(schoolId);
     return schoolId;
   }
 );

@@ -4,6 +4,8 @@ import { Text } from '@react-navigation/elements';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Entypo } from '@expo/vector-icons';
+import { useEffect } from 'react';
+import { getToken } from '@/lib/auth-storage';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -11,6 +13,12 @@ export default function HomeScreen() {
   const handleSchoolsPress = () => {
     router.push('/schools');
   };
+
+  useEffect(() => {
+  getToken().then(token => {
+    console.log('JWT Token:', token);
+  });
+}, []);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
