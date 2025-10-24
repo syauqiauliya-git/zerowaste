@@ -4,6 +4,7 @@ import express from 'express';
 import authRouter from './authRoutes.js';
 import classRouter from './classRoutes.js';
 import schoolRouter from './schoolRoutes.js'; 
+import menuRouter from './menuRoutes.js'; // <-- NEW IMPORT
 // Import feature-specific routers here as they are created
 // import wasteRouter from './wasteRoutes.js';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use('/auth', authRouter);
 router.use('/classes', classRouter);
 router.use('/schools', schoolRouter);
+router.use('/menus', menuRouter);
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -26,6 +28,7 @@ router.get('/', (req, res) => {
       health: '/api/v1/health', // Reflects the new mounted path
       auth: '/api/v1/auth',
       class: 'api/v1/classes',
+      menus: '/api/v1/menus',
       base: '/api/v1'
     }
   });
