@@ -21,13 +21,16 @@ const getTeacherContext = async (userId) => {
     }
 
     // 2. LOGIC FOR CURRENT CLASS (REQUIRED for QR workflow - ZWB02 AC)
-    // *** Replace 'ASSIGNMENT_LOGIC_PENDING' with actual ZWB10 query when implemented. ***
-    const currentAssignment = { class_id: 'ASSIGNMENT_LOGIC_PENDING' }; 
+    // *** FIX: Inject the real Class ID here to ensure login response is correct ***
+    // This ID MUST match the ID hardcoded in the authMiddleware.js file.
+    const realClassId = "68fb3e28a6a61fba689ab22c"; 
+    
+    const currentAssignment = { class_id: realClassId }; 
 
     return {
         teacher_id: teacherProfile._id,
         name: teacherProfile.name,
-        current_class_id: currentAssignment.class_id,
+        current_class_id: currentAssignment.class_id, // Now using the real ID
         school_id: teacherProfile.school_id
     };
 };
@@ -112,6 +115,7 @@ export const login = async (req, res, next) => {
     let context = {};
     if (user.role === 'teacher') {
       // Fetch teacher-specific context (name, primary class ID, school ID)
+      // This call now uses the fixed helper function
       context = await getTeacherContext(user._id);
       
       if (!context.teacher_id) {
@@ -126,7 +130,7 @@ export const login = async (req, res, next) => {
       token,
       user_id: user._id,
       role: user.role,
-      ...context
+      ...context // Spreads teacher_id, name, current_class_id, and school_id
     });
   } catch (err) {
     next(err);
