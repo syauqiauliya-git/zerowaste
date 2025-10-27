@@ -3,7 +3,9 @@ import authRouter from './authRoutes.js';
 import schoolRouter from './schoolRoutes.js';
 import menuRouter from './menuRoutes.js';
 import reportRouter from './reportRoutes.js';
-import classRouter from './classRoutes.js'; // <-- NEW IMPORT
+import sppgStaffRouter from './sppgStaffRoutes.js';
+import assignmentRouter from './assignmentRoutes.js';
+import adminRouter from './adminRoutes.js'; // NEW IMPORT
 
 const router = express.Router();
 
@@ -12,7 +14,9 @@ router.use('/auth', authRouter);
 router.use('/schools', schoolRouter); 
 router.use('/menus', menuRouter); 
 router.use('/reports', reportRouter);
-router.use('/classes', classRouter); // <-- NEW ROUTE MAPPING
+router.use('/sppg-staff', sppgStaffRouter);
+router.use('/assignments', assignmentRouter);
+router.use('/admin', adminRouter); // NEW ROUTE MAPPING
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -27,7 +31,9 @@ router.get('/', (req, res) => {
       schools: '/api/v1/schools', 
       menus: '/api/v1/menus',
       reports: '/api/v1/reports',
-      classes: '/api/v1/classes', // <-- NEW ENDPOINT INFO
+      'sppg-staff': '/api/v1/sppg-staff', 
+      assignments: '/api/v1/assignments',
+      admin: '/api/v1/admin', // NEW ENDPOINT INFO
       base: '/api/v1'
     }
   });
