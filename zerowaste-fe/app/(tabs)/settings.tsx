@@ -46,6 +46,11 @@ export default function SettingsScreen() {
     name: string;
     profileType: "teacher" | "sppgstaff";
   } | null>(null);
+  const [showRejectedPopup, setShowRejectedPopup] = useState(false);
+  const [rejectedInfo, setRejectedInfo] = useState<{
+    name: string;
+    profileType: "teacher" | "sppgstaff";
+  } | null>(null);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -202,7 +207,17 @@ export default function SettingsScreen() {
                     onReject={async () => {
                       try {
                         await rejectProfile(item._id, item.profileType);
-                        Alert.alert("Success", "Profile rejected");
+                        try {
+                          await Haptics.notificationAsync(
+                            Haptics.NotificationFeedbackType.Error
+                          );
+                        } catch {}
+                        setRejectedInfo({
+                          name: item.name,
+                          profileType: item.profileType,
+                        });
+                        setShowRejectedPopup(true);
+                        setTimeout(() => setShowRejectedPopup(false), 1500);
                         loadPending();
                       } catch (e) {
                         console.error(e);
@@ -224,6 +239,12 @@ export default function SettingsScreen() {
         name={approvedInfo?.name ?? ""}
         role={approvedInfo?.profileType}
         onClose={() => setShowApprovedPopup(false)}
+      />
+      <RejectResultModal
+        visible={showRejectedPopup}
+        name={rejectedInfo?.name ?? ""}
+        role={rejectedInfo?.profileType}
+        onClose={() => setShowRejectedPopup(false)}
       />
     </ScrollView>
   );
@@ -322,6 +343,67 @@ function ApproveSuccessModal({
           </View>
           <Text style={styles.popupTitle}>Approved!</Text>
           {!!name && <Text style={styles.popupName}>{name}</Text>}
+          {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
+        </Animated.View>
+      </Pressable>
+    </Modal>
+  );
+}
+
+type RejectResultModalProps = Readonly<{
+  visible: boolean;
+  name: string;
+  role?: "teacher" | "sppgstaff";
+  onClose: () => void;
+}>;
+
+function RejectResultModal({
+  visible,
+  name,
+  role,
+  onClose,
+}: RejectResultModalProps) {
+  const scale = useRef(new Animated.Value(0.9)).current;
+  const fade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+      ]).start();
+    } else {
+      fade.setValue(0);
+      scale.setValue(0.9);
+    }
+  }, [visible, fade, scale]);
+
+  let roleLabel = "";
+  if (role === "teacher") roleLabel = "Teacher";
+  else if (role === "sppgstaff") roleLabel = "SPPG Staff";
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.popupBackdrop} onPress={onClose}>
+        <Animated.View
+          style={[styles.popupCard, { opacity: fade, transform: [{ scale }] }]}
+        >
+          <View style={[styles.popupIconWrap, { backgroundColor: "#FEF2F2" }]}>
+            <MaterialIcons name="cancel" size={66} color="#EF4444" />
+          </View>
+          <Text style={styles.popupTitle}>Rejected</Text>
+          {!!name && (
+            <Text style={[styles.popupName, { color: "#EF4444" }]}>{name}</Text>
+          )}
           {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
         </Animated.View>
       </Pressable>
