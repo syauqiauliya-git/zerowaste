@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { getRole } from "@/lib/auth-storage";
 import Header from "@/components/ui/header";
@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   RefreshControl,
   ScrollView,
+  Animated,
   StyleSheet,
   View,
   Text,
@@ -17,6 +19,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as Haptics from "expo-haptics";
 import {
   approveProfile,
   fetchPendingProfiles,
@@ -38,6 +41,11 @@ export default function SettingsScreen() {
   const [pending, setPending] = useState<CombinedPending[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showApprovedPopup, setShowApprovedPopup] = useState(false);
+  const [approvedInfo, setApprovedInfo] = useState<{
+    name: string;
+    profileType: "teacher" | "sppgstaff";
+  } | null>(null);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -173,7 +181,18 @@ export default function SettingsScreen() {
                     onApprove={async () => {
                       try {
                         await approveProfile(item._id, item.profileType);
-                        Alert.alert("Success", "Profile approved");
+                        // Haptic feedback and success popup
+                        try {
+                          await Haptics.notificationAsync(
+                            Haptics.NotificationFeedbackType.Success
+                          );
+                        } catch {}
+                        setApprovedInfo({
+                          name: item.name,
+                          profileType: item.profileType,
+                        });
+                        setShowApprovedPopup(true);
+                        setTimeout(() => setShowApprovedPopup(false), 1500);
                         loadPending();
                       } catch (e) {
                         console.error(e);
@@ -199,6 +218,13 @@ export default function SettingsScreen() {
           </View>
         </View>
       )}
+      {/* Success popup */}
+      <ApproveSuccessModal
+        visible={showApprovedPopup}
+        name={approvedInfo?.name ?? ""}
+        role={approvedInfo?.profileType}
+        onClose={() => setShowApprovedPopup(false)}
+      />
     </ScrollView>
   );
 }
@@ -241,6 +267,65 @@ function EmptyList() {
     <Text style={{ textAlign: "center", marginTop: 24, color: "#666" }}>
       No pending profiles
     </Text>
+  );
+}
+
+type ApproveSuccessModalProps = Readonly<{
+  visible: boolean;
+  name: string;
+  role?: "teacher" | "sppgstaff";
+  onClose: () => void;
+}>;
+
+function ApproveSuccessModal({
+  visible,
+  name,
+  role,
+  onClose,
+}: ApproveSuccessModalProps) {
+  const scale = useRef(new Animated.Value(0.9)).current;
+  const fade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+      ]).start();
+    } else {
+      fade.setValue(0);
+      scale.setValue(0.9);
+    }
+  }, [visible, fade, scale]);
+
+  let roleLabel = "";
+  if (role === "teacher") roleLabel = "Teacher";
+  else if (role === "sppgstaff") roleLabel = "SPPG Staff";
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.popupBackdrop} onPress={onClose}>
+        <Animated.View
+          style={[styles.popupCard, { opacity: fade, transform: [{ scale }] }]}
+        >
+          <View style={styles.popupIconWrap}>
+            <MaterialIcons name="check-circle" size={66} color="#10B981" />
+          </View>
+          <Text style={styles.popupTitle}>Approved!</Text>
+          {!!name && <Text style={styles.popupName}>{name}</Text>}
+          {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
+        </Animated.View>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -349,5 +434,52 @@ const styles = StyleSheet.create({
   },
   reject: {
     backgroundColor: "#EF4444",
+  },
+  popupBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  popupCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  popupIconWrap: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: "#ECFDF5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  popupTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    marginTop: 2,
+  },
+  popupName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#10B981",
+    marginTop: 6,
+  },
+  popupRole: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 4,
   },
 });
