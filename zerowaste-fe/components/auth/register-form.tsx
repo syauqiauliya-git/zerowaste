@@ -27,15 +27,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 	const [roleOpen, setRoleOpen] = useState(false)
 	const [rememberMe, setRememberMe] = useState(false)
 	const [sekolahId, setSekolahId] = useState('')
+	const [sppgId, setSppgId] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const roles = ['Teacher', 'Student', 'Admin']
+	const roles = ['Teacher', 'SPPG', 'Admin']
 
 	// Map visible role labels to backend-accepted values
-	// Backend expects: 'teacher' | 'student' | 'admin'
+	// Backend expects: 'teacher' | 'sppg_staff' | 'admin'
 	const roleMap: Record<string, string> = {
 		Teacher: 'teacher',
-		Student: 'student',
+		SPPG: 'sppg_staff',
 		Admin: 'admin',
 	}
 	const selectedBackendRole = role ? (roleMap[role] || 'teacher') : 'teacher'
@@ -45,12 +46,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 			setLoading(true)
 			setError(null)
 
-			// Validate sekolah_id only when role is teacher
+			// Validate IDs depending on role
 			const trimmedSekolah = sekolahId.trim()
+			const trimmedSppg = sppgId.trim()
+
 			if (selectedBackendRole === 'teacher') {
 				const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSekolah)
 				if (!isValidObjectId) {
 					setError('Sekolah ID harus berupa ObjectId 24 karakter hexadecimal (mis. 6522a4ab0b83f5a8ab123456)')
+					return
+				}
+			}
+
+			if (selectedBackendRole === 'sppg_staff') {
+				const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSppg)
+				if (!isValidObjectId) {
+					setError('SPPG ID harus berupa ObjectId 24 karakter hexadecimal')
 					return
 				}
 			}
@@ -65,8 +76,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 			if (backendRole === 'teacher') {
 				payload.school_id = trimmedSekolah
 			}
+			if (backendRole === 'sppg_staff') {
+				payload.sppg_id = trimmedSppg
+			}
 			const response = await registerApi(payload)
-			await saveToken(response.token)
+			// save token and role (saveToken expects token and role)
+			await saveToken(response.token, backendRole)
 			onSignIn?.()
 		} catch (e: any) {
 			setError(e?.message || 'Register failed')
@@ -114,6 +129,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 										value={sekolahId}
 										onChangeText={setSekolahId}
 										placeholder="Mongo ObjectId (24 hex)"
+										placeholderTextColor="#9ca3af"
+										style={styles.input}
+										autoCapitalize="none"
+									/>
+								</View>
+							</View>
+						)}
+
+						{/* SPPG ID (only for SPPG staff) */}
+						{selectedBackendRole === 'sppg_staff' && (
+							<View style={styles.fieldGroup}>
+								<Text style={styles.label}>SPPG ID</Text>
+								<View style={styles.inputWrapper}>
+									<Ionicons name="business-outline" size={20} color="#6b7280" style={styles.icon} />
+									<TextInput
+										value={sppgId}
+										onChangeText={setSppgId}
+										placeholder="SPPG ObjectId (24 hex)"
 										placeholderTextColor="#9ca3af"
 										style={styles.input}
 										autoCapitalize="none"
