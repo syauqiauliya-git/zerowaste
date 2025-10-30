@@ -1,70 +1,86 @@
 import Class from '../models/Class.js';
-import School from '../models/School.js';
 import AppError from '../utils/AppError.js';
+import catchAsync from '../utils/catchAsync.js';
 
-// GET semua kelas
-export const getAllClasses = async (req, res, next) => {
-  try {
-    const classes = await Class.find().populate('school_id', 'school_name');
-    res.status(200).json({ status: 'success', data: classes });
-  } catch (err) {
-    next(err);
+// Handler for POST /api/v1/classes
+export const createClass = catchAsync(async (req, res, next) => {
+  // NOTE: school_id validation (existence check) should be added later, but basic FK is handled by Mongoose
+  const newClass = await Class.create(req.body);
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      class: newClass,
+    },
+  });
+});
+
+// Handler for GET /api/v1/classes
+export const getAllClasses = catchAsync(async (req, res, next) => {
+  const classes = await Class.find().populate('school_id', 'school_name address');
+
+  res.status(200).json({
+    status: 'success',
+    results: classes.length,
+    data: {
+      classes,
+    },
+  });
+});
+
+// Handler for GET /api/v1/classes/:id
+export const getClass = catchAsync(async (req, res, next) => {
+  const singleClass = await Class.findById(req.params.id).populate('school_id', 'school_name address');
+
+  if (!singleClass) {
+    return next(new AppError('Kelas tidak ditemukan', 404));
   }
-};
 
-// GET detail kelas
-export const getClassById = async (req, res, next) => {
-  try {
-    const kelas = await Class.findById(req.params.id).populate('school_id', 'school_name');
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
-    res.status(200).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      class: singleClass,
+    },
+  });
+});
+
+// Handler for PUT /api/v1/classes/:id
+export const updateClass = catchAsync(async (req, res, next) => {
+  const updatedClass = await Class.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedClass) {
+    return next(new AppError('Kelas tidak ditemukan', 404));
   }
-};
 
-// POST tambah kelas
-export const createClass = async (req, res, next) => {
-  try {
-    const { school_id, class_name, grade_level } = req.body;
+  res.status(200).json({
+    status: 'success',
+    data: {
+      class: updatedClass,
+    },
+  });
+});
 
-    if (!school_id || !class_name || !grade_level) {
-      return next(new AppError('Semua field harus diisi', 400));
-    }
+// Handler for DELETE /api/v1/classes/:id
+export const deleteClass = catchAsync(async (req, res, next) => {
+  const classToDelete = await Class.findByIdAndDelete(req.params.id);
 
-    const kelas = await Class.create({
-      school_id,
-      class_name,
-      grade_level
-    });
-
-    res.status(201).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
+  if (!classToDelete) {
+    return next(new AppError('Kelas tidak ditemukan', 404));
   }
-};
 
-// PUT update kelas
-export const updateClass = async (req, res, next) => {
-  try {
-    const kelas = await Class.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    });
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
-    res.status(200).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
-  }
-};
+  res.status(204).json({
+    status: 'success',
+    data: null, 
+  });
+});
 
-// DELETE kelas
-export const deleteClass = async (req, res, next) => {
-  try {
-    const kelas = await Class.findByIdAndDelete(req.params.id);
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
-    res.status(204).json({ status: 'success', data: null });
-  } catch (err) {
-    next(err);
-  }
+export default {
+    createClass,
+    getAllClasses,
+    getClass,
+    updateClass,
+    deleteClass,
 };

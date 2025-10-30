@@ -12,6 +12,8 @@ import {
 } from 'react-native'
 import { AuthHeader } from '@/components/ui/auth-header'
 import { Colors } from '@/constants/theme'
+import { registerApi } from '@/lib/auth'
+import { saveToken } from '@/lib/auth-storage'
 
 type RegisterFormProps = {
 	onSignIn?: () => void
@@ -24,10 +26,68 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 	const [role, setRole] = useState('')
 	const [roleOpen, setRoleOpen] = useState(false)
 	const [rememberMe, setRememberMe] = useState(false)
-	const roles = ['Individual', 'Business', 'Organization', 'Student']
+	const [sekolahId, setSekolahId] = useState('')
+	const [sppgId, setSppgId] = useState('')
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const roles = ['Teacher', 'SPPG', 'Admin']
 
-	const handleSubmit = () => {
-		console.log('Form submitted:', { fullName, email, password, role, rememberMe })
+	// Map visible role labels to backend-accepted values
+	// Backend expects: 'teacher' | 'sppg_staff' | 'admin'
+	const roleMap: Record<string, string> = {
+		Teacher: 'teacher',
+		SPPG: 'sppg_staff',
+		Admin: 'admin',
+	}
+	const selectedBackendRole = role ? (roleMap[role] || 'teacher') : 'teacher'
+
+	const handleSubmit = async () => {
+		try {
+			setLoading(true)
+			setError(null)
+
+			// Validate IDs depending on role
+			const trimmedSekolah = sekolahId.trim()
+			const trimmedSppg = sppgId.trim()
+
+			if (selectedBackendRole === 'teacher') {
+				const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSekolah)
+				if (!isValidObjectId) {
+					setError('Sekolah ID harus berupa ObjectId 24 karakter hexadecimal (mis. 6522a4ab0b83f5a8ab123456)')
+					return
+				}
+			}
+
+			if (selectedBackendRole === 'sppg_staff') {
+				const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSppg)
+				if (!isValidObjectId) {
+					setError('SPPG ID harus berupa ObjectId 24 karakter hexadecimal')
+					return
+				}
+			}
+
+			const backendRole = selectedBackendRole
+			const payload: any = {
+				name: fullName,
+				email: email.trim(),
+				password,
+				role: backendRole,
+			}
+			if (backendRole === 'teacher') {
+				payload.school_id = trimmedSekolah
+			}
+			if (backendRole === 'sppg_staff') {
+				payload.sppg_id = trimmedSppg
+			}
+			const response = await registerApi(payload)
+			// save token and role (saveToken expects token and role)
+			await saveToken(response.token, backendRole)
+			onSignIn?.()
+		} catch (e: any) {
+			setError(e?.message || 'Register failed')
+		} finally {
+			setLoading(false)
+		}
 	}
 
 	const toggleRole = (value: string) => {
@@ -42,6 +102,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 
 					<View style={styles.formBox}>
 						<Text style={styles.title}>Create your Account</Text>
+                        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
 						<View style={styles.fieldGroup}>
 							<Text style={styles.label}>Full name</Text>
@@ -57,6 +118,42 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 								/>
 							</View>
 						</View>
+
+						{/* School ID (only for Teacher) */}
+						{selectedBackendRole === 'teacher' && (
+							<View style={styles.fieldGroup}>
+								<Text style={styles.label}>School ID</Text>
+								<View style={styles.inputWrapper}>
+									<Ionicons name="school-outline" size={20} color="#6b7280" style={styles.icon} />
+									<TextInput
+										value={sekolahId}
+										onChangeText={setSekolahId}
+										placeholder="Mongo ObjectId (24 hex)"
+										placeholderTextColor="#9ca3af"
+										style={styles.input}
+										autoCapitalize="none"
+									/>
+								</View>
+							</View>
+						)}
+
+						{/* SPPG ID (only for SPPG staff) */}
+						{selectedBackendRole === 'sppg_staff' && (
+							<View style={styles.fieldGroup}>
+								<Text style={styles.label}>SPPG ID</Text>
+								<View style={styles.inputWrapper}>
+									<Ionicons name="business-outline" size={20} color="#6b7280" style={styles.icon} />
+									<TextInput
+										value={sppgId}
+										onChangeText={setSppgId}
+										placeholder="SPPG ObjectId (24 hex)"
+										placeholderTextColor="#9ca3af"
+										style={styles.input}
+										autoCapitalize="none"
+									/>
+								</View>
+							</View>
+						)}
 
 						<View style={styles.fieldGroup}>
 							<Text style={styles.label}>Email</Text>
@@ -127,8 +224,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 							<Text style={styles.rememberText}>Remember me</Text>
 						</Pressable>
 
-						<TouchableOpacity activeOpacity={0.85} style={styles.submitButton} onPress={handleSubmit}>
-							<Text style={styles.submitText}>SIGN UP</Text>
+						<TouchableOpacity activeOpacity={0.85} style={[styles.submitButton, loading && { opacity: 0.7 }]} onPress={handleSubmit} disabled={loading}>
+							<Text style={styles.submitText}>{loading ? 'SIGNING UP...' : 'SIGN UP'}</Text>
 						</TouchableOpacity>
 
 						<View style={styles.signInRow}>
@@ -160,6 +257,13 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		marginBottom: 28,
 		color: '#111827',
+	},
+	errorText: {
+		color: '#b91c1c',
+		marginBottom: 8,
+		fontSize: 13,
+		fontWeight: '600',
+		textAlign: 'center',
 	},
 	fieldGroup: {
 		marginBottom: 20,
