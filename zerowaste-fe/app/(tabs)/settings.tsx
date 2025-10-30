@@ -357,14 +357,23 @@ type RejectResultModalProps = Readonly<{
   onClose: () => void;
 }>;
 
-function RejectResultModal({ visible, name, role, onClose }: RejectResultModalProps) {
+function RejectResultModal({
+  visible,
+  name,
+  role,
+  onClose,
+}: RejectResultModalProps) {
   const scale = useRef(new Animated.Value(0.9)).current;
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.timing(fade, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(fade, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
         Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
       ]).start();
     } else {
@@ -378,14 +387,23 @@ function RejectResultModal({ visible, name, role, onClose }: RejectResultModalPr
   else if (role === "sppgstaff") roleLabel = "SPPG Staff";
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <Pressable style={styles.popupBackdrop} onPress={onClose}>
-        <Animated.View style={[styles.popupCard, { opacity: fade, transform: [{ scale }] }]}> 
+        <Animated.View
+          style={[styles.popupCard, { opacity: fade, transform: [{ scale }] }]}
+        >
           <View style={[styles.popupIconWrap, { backgroundColor: "#FEF2F2" }]}>
             <MaterialIcons name="cancel" size={66} color="#EF4444" />
           </View>
           <Text style={styles.popupTitle}>Rejected</Text>
-          {!!name && <Text style={[styles.popupName, { color: "#EF4444" }]}>{name}</Text>}
+          {!!name && (
+            <Text style={[styles.popupName, { color: "#EF4444" }]}>{name}</Text>
+          )}
           {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
         </Animated.View>
       </Pressable>
