@@ -1,13 +1,22 @@
-// src/routes/api.js
-
 import express from 'express';
-// Import feature-specific routers here as they are created
-// import wasteRouter from './wasteRoutes.js';
+import authRouter from './authRoutes.js';
+import schoolRouter from './schoolRoutes.js';
+import menuRouter from './menuRoutes.js';
+import reportRouter from './reportRoutes.js';
+import sppgStaffRouter from './sppgStaffRoutes.js';
+import assignmentRouter from './assignmentRoutes.js';
+import adminRouter from './adminRoutes.js'; // NEW IMPORT
 
 const router = express.Router();
 
 // 1. Feature Routers
-// Example: router.use('/waste', wasteRouter);
+router.use('/auth', authRouter);
+router.use('/schools', schoolRouter); 
+router.use('/menus', menuRouter); 
+router.use('/reports', reportRouter);
+router.use('/sppg-staff', sppgStaffRouter);
+router.use('/assignments', assignmentRouter);
+router.use('/admin', adminRouter); // NEW ROUTE MAPPING
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -17,13 +26,19 @@ router.get('/', (req, res) => {
     description: 'Backend for MBG Food Waste Monitoring System',
     status: 'Active',
     endpoints: {
-      health: '/api/v1/health', // Reflects the new mounted path
+      health: '/api/v1/health', 
+      auth: '/api/v1/auth',
+      schools: '/api/v1/schools', 
+      menus: '/api/v1/menus',
+      reports: '/api/v1/reports',
+      'sppg-staff': '/api/v1/sppg-staff', 
+      assignments: '/api/v1/assignments',
+      admin: '/api/v1/admin', // NEW ENDPOINT INFO
       base: '/api/v1'
     }
   });
 });
 
-// 3. Health Check Route 
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
