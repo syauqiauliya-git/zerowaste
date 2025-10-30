@@ -3,6 +3,8 @@ import authRouter from './authRoutes.js';
 import schoolRouter from './schoolRoutes.js';
 import menuRouter from './menuRoutes.js';
 import reportRouter from './reportRoutes.js';
+import analyticsRouter from './analyticsRoutes.js';
+import sppgRouter from './sppgRoutes.js';
 import sppgStaffRouter from './sppgStaffRoutes.js';
 import assignmentRouter from './assignmentRoutes.js';
 import adminRouter from './adminRoutes.js'; // NEW IMPORT
@@ -14,6 +16,8 @@ router.use('/auth', authRouter);
 router.use('/schools', schoolRouter); 
 router.use('/menus', menuRouter); 
 router.use('/reports', reportRouter);
+router.use('/analytics', analyticsRouter);
+router.use('/sppg', sppgRouter);
 router.use('/sppg-staff', sppgStaffRouter);
 router.use('/assignments', assignmentRouter);
 router.use('/admin', adminRouter); // NEW ROUTE MAPPING
@@ -31,6 +35,8 @@ router.get('/', (req, res) => {
       schools: '/api/v1/schools', 
       menus: '/api/v1/menus',
       reports: '/api/v1/reports',
+      analytics: '/api/v1/analytics',
+      sppg: '/api/v1/sppg',
       'sppg-staff': '/api/v1/sppg-staff', 
       assignments: '/api/v1/assignments',
       admin: '/api/v1/admin', // NEW ENDPOINT INFO
