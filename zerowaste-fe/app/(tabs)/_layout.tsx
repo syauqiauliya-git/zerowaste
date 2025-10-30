@@ -43,7 +43,7 @@ export default function TabLayout() {
     >
       {/* Common tabs for all roles */}
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (

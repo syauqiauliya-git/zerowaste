@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { Ionicons } from "@expo/vector-icons";
-import type React from "react";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons"
+import type React from "react"
+import { useState } from "react"
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -12,37 +12,37 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { router } from "expo-router";
-import { AuthHeader } from "@/components/ui/auth-header";
-import { Colors } from "@/constants/theme";
-import { loginApi } from "@/lib/auth";
-import { saveToken } from "@/lib/auth-storage";
+} from "react-native"
+import { router } from "expo-router"
+import { AuthHeader } from "@/components/ui/auth-header"
+import { Colors } from "@/constants/theme"
+import { loginApi } from "@/lib/auth"
+import { saveToken } from "@/lib/auth-storage"
 
 type LoginFormProps = {
-  onSignUp?: () => void;
-};
+  onSignUp?: () => void
+}
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const response = await loginApi({ email: email.trim(), password });
-      await saveToken(response.token, response.role);
-      router.replace("/(tabs)/home");
+      setLoading(true)
+      setError(null)
+      const response = await loginApi({ email: email.trim(), password })
+      await saveToken(response.token, response.role)
+      router.replace("/(tabs)/home")
     } catch (e: any) {
-      setError(e?.message || "Login failed");
+      setError(e?.message || "Login failed")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={50}>
@@ -56,12 +56,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons
-                name="mail-outline"
-                size={20}
-                color="#6b7280"
-                style={styles.icon}
-              />
+              <Ionicons name="mail-outline" size={20} color="#6b7280" style={styles.icon} />
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -77,12 +72,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={20}
-                color="#6b7280"
-                style={styles.icon}
-              />
+              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.icon} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
@@ -94,16 +84,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
             </View>
           </View>
 
-          <Pressable
-            style={styles.rememberRow}
-            onPress={() => setRememberMe((v) => !v)}
-          >
-            <View
-              style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
-            >
-              {rememberMe && (
-                <Ionicons name="checkmark" size={16} color="#fff" />
-              )}
+          <Pressable style={styles.rememberRow} onPress={() => setRememberMe((v) => !v)}>
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && <Ionicons name="checkmark" size={16} color="#fff" />}
             </View>
             <Text style={styles.rememberText}>Remember me</Text>
           </Pressable>
@@ -114,9 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.submitText}>
-              {loading ? "SIGNING IN..." : "SIGN IN"}
-            </Text>
+            <Text style={styles.submitText}>{loading ? "SIGNING IN..." : "SIGN IN"}</Text>
           </TouchableOpacity>
 
           <View style={{ alignItems: "center", marginTop: 16 }}>
@@ -134,8 +115,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   scroll: {
@@ -245,6 +226,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-});
+})
 
-export default LoginForm;
+export default LoginForm

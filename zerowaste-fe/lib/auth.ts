@@ -1,9 +1,11 @@
 import { apiFetch } from './api'
+import { removeToken } from './auth-storage'
 
 export type LoginResponse = {
+  user_id: string
   token: string
-  guru_id: string
-  nama: string
+  message: string
+  role: "admin" | "teacher" | "student"
 }
 
 export async function loginApi(payload: { email: string; password: string }) {
@@ -32,4 +34,8 @@ export async function registerApi(payload: {
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export async function logout() {
+  await removeToken()
 }

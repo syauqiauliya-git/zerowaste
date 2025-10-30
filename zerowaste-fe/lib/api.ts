@@ -1,9 +1,17 @@
 import { API_BASE_URL } from '@/constants/config'
 
+import { getToken } from '@/lib/auth-storage'
+
 export async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`
   const headers = new Headers(options.headers || {})
   if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+
+  // Add token if available
+  const token = await getToken()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
 
   // Dev helper: log the request URL to diagnose networking issues (emulator vs device)
   if (__DEV__) {

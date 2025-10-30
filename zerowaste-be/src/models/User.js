@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -12,17 +13,21 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true
   },
-  password_hash: {
+  // Renamed to 'password' and ADDED select: false for security
+  password: { 
     type: String,
-    required: [true, 'Password harus diisi']
+    required: [true, 'Password harus diisi'],
+    minlength: 8, 
+    select: false 
   },
   number: {
     type: String,
     default: null
   },
+  // Corrected ENUM to match the Class Diagram
   role: {
     type: String,
-    enum: ['teacher', 'student', 'admin'],
+    enum: ['teacher', 'sppg_staff', 'admin'], 
     required: true
   },
   is_active: {
@@ -34,6 +39,16 @@ const userSchema = new mongoose.Schema({
     default: null
   }
 }, { timestamps: true });
+
+// CRITICAL HOOK: AUTOMATICALLY hash the password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  // Hash the password with cost of 12
+  this.password = await bcrypt.hash(this.password, 12);
+  
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 

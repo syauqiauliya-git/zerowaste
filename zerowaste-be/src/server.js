@@ -9,6 +9,9 @@ import connectDB from './db/connect.js';
 import AppError from './utils/AppError.js';
 import globalErrorHandler from './middleware/errorHandler.js';
 
+// NEW IMPORT: Load the model index file
+import './models/index.js'; 
+
 // Load environment variables
 dotenv.config();
 
