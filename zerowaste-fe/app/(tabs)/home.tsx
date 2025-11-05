@@ -10,30 +10,10 @@ import { getToken } from '@/lib/auth-storage';
 export default function HomeScreen() {
   const router = useRouter();
 
-  const handleSchoolsPress = () => {
-    router.push('/schools');
-  };
-
-  useEffect(() => {
-  getToken().then(token => {
-    console.log('JWT Token:', token);
-  });
-}, []);
-
   return (
-    <ScrollView contentContainerStyle={styles.scrollView}>
-        <Pressable style={styles.schoolButton} onPress={handleSchoolsPress}>
-          <LinearGradient
-            colors={["#059669", "#10B981", "#059669"]}
-            start={{ x: -0.1, y: 0.5 }}
-            end={{ x: 1.1, y: 0.5 }}
-            style={styles.gradient}
-          >
-            <Text style={styles.headerTitle}>Schools</Text>
-            <Entypo name="chevron-thin-right" size={24} color="white" />
-          </LinearGradient>
-        </Pressable>
-    </ScrollView>
+    <View>
+        
+    </View>
   );
 }
 
