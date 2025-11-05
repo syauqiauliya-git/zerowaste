@@ -1,19 +1,30 @@
 import express from 'express';
-import classController from '../controllers/classController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
+import {
+  getAllClasses,
+  getClassById,
+  getClassesBySchoolId,
+  createClass,
+  updateClass,
+  deleteClass
+} from '../controllers/classController.js';
 
 const router = express.Router();
 
-// Apply security and role restriction for all class CRUD operations
-router.use(protect, restrictTo('admin'));
+// Public routes (no authentication needed)
+router.get('/', getAllClasses);
+router.get('/school/:schoolId', getClassesBySchoolId);
+router.get('/:id', getClassById);
 
-router.route('/')
-  .post(classController.createClass)
-  .get(classController.getAllClasses);
+// Protected routes (need authentication and admin role)
+router.use(protect);
+router.use(restrictTo('admin'));
 
-router.route('/:id')
-  .get(classController.getClass)
-  .put(classController.updateClass)
-  .delete(classController.deleteClass);
+router.post('/', createClass);
+
+router
+  .route('/:id')
+  .put(updateClass)
+  .delete(deleteClass);
 
 export default router;
