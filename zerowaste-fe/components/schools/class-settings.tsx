@@ -9,60 +9,67 @@ import {
   Text,
   Pressable,
   TextInput,
+  Alert,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { School } from "@/lib/school";
+import { Class } from "@/lib/class";
 
-type SchoolSettingsProps = {
-  schools: School[];
+type ClassSettingsProps = {
+  classes: Class[];
   loading: boolean;
   onRefresh: () => void;
 };
 
-export default function SchoolSettings({
-  schools,
+export default function ClassSettings({
+  classes,
   loading,
   onRefresh,
-}: SchoolSettingsProps) {
+}: ClassSettingsProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSchoolPress = (schoolId: string) => {
-    console.log("Navigating to school detail with ID:", schoolId);
+  const handleClassPress = (classId: string) => {
+    console.log("Navigating to class detail with ID:", classId);
     router.push({
-      pathname: "/school-detail",
+      pathname: "/class-detail",
       params: {
-        schoolId: schoolId,
+        classId: classId,
       },
     });
   };
 
-  const filteredSchools = schools.filter((school) => {
+  const filteredClasses = classes.filter((classItem) => {
     const query = searchQuery.toLowerCase();
+    const schoolName =
+      typeof classItem.school_id === "object"
+        ? classItem.school_id.school_name
+        : "";
     return (
-      school.school_name.toLowerCase().includes(query) ||
-      school.address.toLowerCase().includes(query)
+      classItem.class_name.toLowerCase().includes(query) ||
+      classItem.grade_level.toLowerCase().includes(query) ||
+      schoolName.toLowerCase().includes(query)
     );
   });
 
-  const renderSchoolItem = ({ item }: { item: School }) => {
+  const renderClassItem = ({ item }: { item: Class }) => {
+
     return (
       <Pressable
-        style={styles.schoolItem}
-        onPress={() => handleSchoolPress(item._id)}
+        style={styles.classItem}
+        onPress={() => handleClassPress(item._id)}
       >
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 5 }}>{item.school_name}</Text>
-        <View style={styles.schoolItemContent}>
-          <View style={styles.schoolItemContentItem}>
-            <Text style={{ fontWeight: "bold", fontSize: 12 }}>Address</Text>
+        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 5 }}>{item.class_name}-{item.grade_level}</Text>
+        <View style={styles.classItemContent}>
+        <View style={styles.classItemContentItem}>
+            <Text style={{ fontWeight: "bold", fontSize: 12 }}>School</Text>
             <Text style={{ fontWeight: "thin", fontSize: 12 }}>
-              {item.address}
+              {item.school_id.school_name}
             </Text>
           </View>
-          <View style={styles.schoolItemContentItem}>
-            <Text style={{ fontWeight: "bold", fontSize: 12 }}>Students</Text>
+          <View style={styles.classItemContentItem}>
+            <Text style={{ fontWeight: "bold", fontSize: 12 }}>Grade</Text>
             <Text style={{ fontWeight: "thin", fontSize: 12 }}>
-              {item.jml_murid}
+              {item.grade_level}
             </Text>
           </View>
         </View>
@@ -77,7 +84,7 @@ export default function SchoolSettings({
           <MaterialIcons name="search" size={20} color="#6b7280" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search schools..."
+            placeholder="Search classes..."
             placeholderTextColor="#9ca3af"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -88,12 +95,6 @@ export default function SchoolSettings({
             </Pressable>
           )}
         </View>
-        <Pressable
-          style={styles.addSchoolButton}
-          onPress={() => router.push("/school-create")}
-        >
-          <MaterialIcons name="add" size={24} color="#fff" />
-        </Pressable>
       </View>
       <ScrollView
         style={styles.scrollViewContent}
@@ -102,15 +103,15 @@ export default function SchoolSettings({
           <RefreshControl refreshing={loading} onRefresh={onRefresh} />
         }
       >
-        <View style={styles.schoolContainer}>
-          {filteredSchools.length === 0 ? (
-            <View key="no-schools" style={styles.schoolItem}>
-              <Text>No schools found</Text>
+        <View style={styles.classContainer}>
+          {filteredClasses.length === 0 ? (
+            <View key="no-classes" style={styles.classItem}>
+              <Text>No classes found</Text>
             </View>
           ) : (
             <FlatList
-              data={filteredSchools}
-              renderItem={renderSchoolItem}
+              data={filteredClasses}
+              renderItem={renderClassItem}
               keyExtractor={(item) => item._id}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
     color: "#111827",
     padding: 0,
   },
-  addSchoolButton: {
+  addClassButton: {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#10B981",
@@ -165,10 +166,10 @@ const styles = StyleSheet.create({
   scrollViewContentContainer: {
     flexGrow: 1,
   },
-  schoolContainer: {
+  classContainer: {
     overflow: "hidden",
   },
-  schoolItem: {
+  classItem: {
     borderBottomWidth: 1,
     borderRadius: 10,
     borderColor: "#E5E7EB",
@@ -179,11 +180,11 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "space-between",
   },
-  schoolItemContent: {
+  classItemContent: {
     flexDirection: "row",
     gap: 22,
   },
-  schoolItemContentItem: {
+  classItemContentItem: {
     flexDirection: "column",
     alignItems: "flex-start",
     gap: 4,

@@ -16,7 +16,7 @@ export interface Class {
 }
 
 export async function fetchClasses() {
-  return apiFetch<Class[]>("/api/v1/classes");
+  return apiFetch<{ status: string; data: Class[] }>("/api/v1/classes");
 }
 
 export async function fetchClassDetail(classId: string) {

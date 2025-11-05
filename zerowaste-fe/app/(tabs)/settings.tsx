@@ -27,7 +27,9 @@ import {
 } from "@/lib/admin";
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSchools } from '@/store/slices/schoolSlice';
+import { fetchClasses } from '@/store/slices/classSlice';
 import SchoolSettings from '@/components/schools/school-settings';
+import ClassSettings from '@/components/schools/class-settings';
 
 type CombinedPending = {
   _id: string;
@@ -40,6 +42,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { schools, loading: schoolsLoading } = useAppSelector((state) => state.schools);
+  const { classes, loading: classesLoading } = useAppSelector((state) => state.classes);
   const [activeTab, setActiveTab] = useState<"school" | "class" | "user">(
     "school"
   );
@@ -88,6 +91,8 @@ export default function SettingsScreen() {
     loadPending();
     if (activeTab === "school") {
       dispatch(fetchSchools());
+    } else if (activeTab === "class") {
+      dispatch(fetchClasses());
     }
   }, [router, loadPending, dispatch, activeTab]);
 
@@ -100,6 +105,11 @@ export default function SettingsScreen() {
   const onSchoolsRefresh = async () => {
     dispatch(fetchSchools());
     console.log('Refreshing schools: ', schools);
+  };
+
+  const onClassesRefresh = async () => {
+    dispatch(fetchClasses());
+    console.log('Refreshing classes: ', classes);
   };
 
   return (
@@ -157,13 +167,11 @@ export default function SettingsScreen() {
       )}
 
       {activeTab === "class" && (
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Class Settings</Text>
-          <View style={styles.settingItem}>
-            <MaterialIcons name="class" size={24} color="#10B981" />
-            <Text style={styles.settingText}>Manage class information</Text>
-          </View>
-        </View>
+        <ClassSettings
+          classes={classes}
+          loading={classesLoading}
+          onRefresh={onClassesRefresh}
+        />
       )}
 
       {activeTab === "user" && (
