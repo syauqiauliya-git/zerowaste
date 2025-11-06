@@ -26,6 +26,7 @@ type LoginFormProps = {
 export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,8 +80,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
                 placeholder="Password"
                 placeholderTextColor="#9ca3af"
                 style={styles.input}
-                secureTextEntry
+                secureTextEntry={!showPassword}
               />
+              <TouchableOpacity style={{ position: 'absolute', right: 14, top: 14 }} onPress={() => setShowPassword(s => !s)}>
+                <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={18} color="#6b7280" />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -107,7 +111,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
           </View>
 
           <View style={{ alignItems: "center", marginTop: 12 }}>
-            <Text style={styles.noAccount}>Don't have an account?</Text>
+            <Text style={styles.noAccount}>Dont have an account?</Text>
             <Pressable onPress={onSignUp}>
               <Text style={styles.signUpLink}>Sign Up</Text>
             </Pressable>
@@ -131,9 +135,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    textAlign: "left",
+    textAlign: "center",
     marginBottom: 22,
-    color: "#111827",
+    color: "#064E3B",
   },
   fieldGroup: {
     marginBottom: 16,
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6b7280",
+    color: "#064E3B",
     marginBottom: 6,
   },
   inputWrapper: {
@@ -154,6 +158,13 @@ const styles = StyleSheet.create({
     paddingLeft: 40,
     paddingRight: 14,
     minHeight: 48,
+    // subtle drop shadow to match register form
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: 'visible',
   },
   icon: {
     position: "absolute",
@@ -187,7 +198,7 @@ const styles = StyleSheet.create({
   rememberText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#111827",
+    color: "#064E3B",
   },
   submitButton: {
     backgroundColor: Colors.light.secondary,

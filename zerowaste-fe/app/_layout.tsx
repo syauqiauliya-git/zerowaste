@@ -68,7 +68,40 @@ export default function RootLayout() {
           headerTintColor: '#fff',
         }}
       />
-      </Stack>
+      <Stack.Screen
+          name="menu-create"
+          options={{
+            title: "Create Menu",
+            presentation: "modal",
+            headerStyle: {
+              backgroundColor: "#10B981",
+            },
+            headerTintColor: "#fff",
+          }}
+        />
+        <Stack.Screen
+          name="menu/[id]"
+          options={{
+            title: "Menu Detail",
+            presentation: "modal",
+            headerStyle: {
+              backgroundColor: "#10B981",
+            },
+            headerTintColor: "#fff",
+          }}
+        />
+        <Stack.Screen
+          name="menu/[id]/edit"
+          options={{
+            title: "Edit Menu",
+            presentation: "modal",
+            headerStyle: {
+              backgroundColor: "#10B981",
+            },
+            headerTintColor: "#fff",
+          }}
+        />
+      </Stack>  
     </Provider>
   );
 }
