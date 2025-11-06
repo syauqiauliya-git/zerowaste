@@ -25,6 +25,11 @@ import {
   fetchPendingProfiles,
   rejectProfile,
 } from "@/lib/admin";
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchSchools } from '@/store/slices/schoolSlice';
+import { fetchClasses } from '@/store/slices/classSlice';
+import SchoolSettings from '@/components/schools/school-settings';
+import ClassSettings from '@/components/schools/class-settings';
 
 type CombinedPending = {
   _id: string;
@@ -35,6 +40,9 @@ type CombinedPending = {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { schools, loading: schoolsLoading } = useAppSelector((state) => state.schools);
+  const { classes, loading: classesLoading } = useAppSelector((state) => state.classes);
   const [activeTab, setActiveTab] = useState<"school" | "class" | "user">(
     "school"
   );
@@ -81,7 +89,12 @@ export default function SettingsScreen() {
     };
     checkRole();
     loadPending();
-  }, [router, loadPending]);
+    if (activeTab === "school") {
+      dispatch(fetchSchools());
+    } else if (activeTab === "class") {
+      dispatch(fetchClasses());
+    }
+  }, [router, loadPending, dispatch, activeTab]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -89,8 +102,18 @@ export default function SettingsScreen() {
     setRefreshing(false);
   }, [loadPending]);
 
+  const onSchoolsRefresh = async () => {
+    dispatch(fetchSchools());
+    console.log('Refreshing schools: ', schools);
+  };
+
+  const onClassesRefresh = async () => {
+    dispatch(fetchClasses());
+    console.log('Refreshing classes: ', classes);
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.scrollView}>
+    <View style={styles.mainView}>
       <Header title="Settings" icon="settings" />
 
       <View style={styles.tabContainer}>
@@ -136,23 +159,19 @@ export default function SettingsScreen() {
       </View>
 
       {activeTab === "school" && (
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>School Settings</Text>
-          <View style={styles.settingItem}>
-            <MaterialIcons name="school" size={24} color="#10B981" />
-            <Text style={styles.settingText}>Manage school information</Text>
-          </View>
-        </View>
+        <SchoolSettings
+          schools={schools}
+          loading={schoolsLoading}
+          onRefresh={onSchoolsRefresh}
+        />
       )}
 
       {activeTab === "class" && (
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Class Settings</Text>
-          <View style={styles.settingItem}>
-            <MaterialIcons name="class" size={24} color="#10B981" />
-            <Text style={styles.settingText}>Manage class information</Text>
-          </View>
-        </View>
+        <ClassSettings
+          classes={classes}
+          loading={classesLoading}
+          onRefresh={onClassesRefresh}
+        />
       )}
 
       {activeTab === "user" && (
@@ -225,7 +244,7 @@ export default function SettingsScreen() {
         role={approvedInfo?.profileType}
         onClose={() => setShowApprovedPopup(false)}
       />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -330,10 +349,10 @@ function ApproveSuccessModal({
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  mainView: {
     paddingHorizontal: 18,
-    paddingVertical: 20,
-    flexGrow: 1,
+    paddingTop: 20,
+    flex: 1,
   },
   tabContainer: {
     flexDirection: "row",
@@ -361,6 +380,7 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 16,
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,

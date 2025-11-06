@@ -8,6 +8,7 @@ import sppgRouter from './sppgRoutes.js';
 import sppgStaffRouter from './sppgStaffRoutes.js';
 import assignmentRouter from './assignmentRoutes.js';
 import adminRouter from './adminRoutes.js'; // NEW IMPORT
+import classRouter from './classRoutes.js';
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.use('/sppg', sppgRouter);
 router.use('/sppg-staff', sppgStaffRouter);
 router.use('/assignments', assignmentRouter);
 router.use('/admin', adminRouter); // NEW ROUTE MAPPING
+router.use('/classes', classRouter);
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -40,6 +42,7 @@ router.get('/', (req, res) => {
       'sppg-staff': '/api/v1/sppg-staff', 
       assignments: '/api/v1/assignments',
       admin: '/api/v1/admin', // NEW ENDPOINT INFO
+      classes: '/api/v1/classes',
       base: '/api/v1'
     }
   });
