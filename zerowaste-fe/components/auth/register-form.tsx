@@ -23,6 +23,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 	const [fullName, setFullName] = useState('')
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
 	const [role, setRole] = useState('')
 	const [roleOpen, setRoleOpen] = useState(false)
 	const [rememberMe, setRememberMe] = useState(false)
@@ -39,7 +40,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 		SPPG: 'sppg_staff',
 		Admin: 'admin',
 	}
-	const selectedBackendRole = role ? (roleMap[role] || 'teacher') : 'teacher'
+	const selectedBackendRole = role ? (roleMap[role] || 'teacher') : ''
 
 	const handleSubmit = async () => {
 		try {
@@ -181,8 +182,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 									placeholder="Password"
 									placeholderTextColor="#9ca3af"
 									style={styles.input}
-									secureTextEntry
+									secureTextEntry={!showPassword}
 								/>
+								<TouchableOpacity
+									style={{ position: 'absolute', right: 14, top: 14 }}
+									onPress={() => setShowPassword(s => !s)}
+								>
+									<Ionicons name={showPassword ? 'eye' : 'eye-off'} size={18} color="#6b7280" />
+								</TouchableOpacity>
 							</View>
 						</View>
 
@@ -256,7 +263,7 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 		textAlign: 'center',
 		marginBottom: 28,
-		color: '#111827',
+		color: '#064E3B',
 	},
 	errorText: {
 		color: '#b91c1c',
@@ -271,7 +278,7 @@ const styles = StyleSheet.create({
 	label: {
 		fontSize: 13,
 		fontWeight: '600',
-		color: '#6b7280',
+		color: '#064E3B',
 		marginBottom: 6,
 	},
 	inputWrapper: {
@@ -284,6 +291,12 @@ const styles = StyleSheet.create({
 		paddingLeft: 40,
 		paddingRight: 14,
 		minHeight: 52,
+		shadowColor: '#064E3B',
+		shadowOffset: { width: 0, height: 3 },
+		shadowOpacity: 0.06,
+		shadowRadius: 6,
+		elevation: 3,
+		overflow: 'visible',
 	},
 	icon: {
 		position: 'absolute',
@@ -332,7 +345,7 @@ const styles = StyleSheet.create({
 	rememberText: {
 		fontSize: 15,
 		fontWeight: '600',
-		color: '#111827',
+		color: '#064E3B',
 	},
 	submitButton: {
 		backgroundColor: Colors.light.secondary,
