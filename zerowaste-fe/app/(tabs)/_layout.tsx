@@ -9,8 +9,10 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
 import { getRole } from "@/lib/auth-storage";
+import { logout } from "@/lib/auth";
+import { router } from "expo-router";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -21,6 +23,12 @@ export default function TabLayout() {
       setRole(userRole?.toLowerCase() || null);
     });
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    console.log("User logged out");
+    router.replace("/");
+  };
 
   return (
     <Tabs
@@ -34,6 +42,16 @@ export default function TabLayout() {
             style={{ width: 122, height: 32, marginLeft: 15 }}
             resizeMode="contain"
           />
+        ),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={{
+              marginRight: 25,
+            }}
+          >
+            <MaterialIcons name="logout" size={23} color="#fff" />
+          </TouchableOpacity>
         ),
         headerStyle: {
           backgroundColor: "#10B981",
