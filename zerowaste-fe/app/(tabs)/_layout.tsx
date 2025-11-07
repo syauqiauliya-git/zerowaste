@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs } from "expo-router";
-import { useEffect, useState } from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
@@ -10,22 +9,19 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image, TouchableOpacity } from "react-native";
-import { getRole } from "@/lib/auth-storage";
 import { logout } from "@/lib/auth";
 import { router } from "expo-router";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { clearRole } from "@/store/slices/authSlice";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [role, setRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    getRole().then((userRole) => {
-      setRole(userRole?.toLowerCase() || null);
-    });
-  }, []);
+  const dispatch = useAppDispatch();
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
 
   const handleLogout = async () => {
     await logout();
+    dispatch(clearRole());
     console.log("User logged out");
     router.replace("/");
   };

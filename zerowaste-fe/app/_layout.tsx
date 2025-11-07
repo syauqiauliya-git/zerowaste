@@ -1,11 +1,10 @@
 import { Stack, useRouter } from "expo-router";
 import { Provider } from 'react-redux';
 import { store } from '../store/store';
-import { useEffect, useState } from "react";
-import { getRole } from "@/lib/auth-storage";
+import { useEffect } from "react";
+import { fetchRole } from '../store/slices/authSlice';
 
 export default function RootLayout() {
-  const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
   
   const handleAddSchool = () => {
@@ -13,11 +12,12 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    getRole().then(role => {
-        console.log('Role:', role);
-        setRole(role);
-      });
-    }, []);
+    store.dispatch(fetchRole()).then((result) => {
+      if (fetchRole.fulfilled.match(result)) {
+        console.log('Role:', result.payload);
+      }
+    });
+  }, []);
 
   return (
     <Provider store={store}>

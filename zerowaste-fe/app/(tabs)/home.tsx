@@ -6,58 +6,44 @@ import { useRouter } from 'expo-router';
 import { Entypo } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { getToken } from '@/lib/auth-storage';
+import { useAppSelector } from '@/store/hooks';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
 
   return (
-    <View>
-        
+    <View style={styles.mainView}>
+      {role === "admin" ? (
+        <View style={styles.adminView}>
+          <Text style={styles.title}>Admin Dashboard</Text>
+          <Text>Select a tab below to manage your system</Text>
+        </View>
+      ) : (
+        <View style={styles.userView}>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text>Select a tab below to manage your system</Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  mainView: {
     paddingHorizontal: 18,
     paddingVertical: 20,
-    flexGrow: 1,
   },
-  gradient: {
-    flex: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 15,
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  schoolContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  schoolButton: {
-    flexDirection: 'row',
+  adminView: {
     alignItems: 'center',
   },
-  headerTitle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  schoolItem: {
-    backgroundColor: '#fff',
-    paddingVertical: 20,
-    paddingHorizontal: 15,
+  userView: {
     alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#000',
+    paddingVertical: 10,
   },
 });
