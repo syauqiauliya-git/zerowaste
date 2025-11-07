@@ -8,7 +8,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image, TouchableOpacity } from "react-native";
+import { Image, TouchableOpacity, Alert } from "react-native";
 import { logout } from "@/lib/auth";
 import { router } from "expo-router";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -20,10 +20,26 @@ export default function TabLayout() {
   const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
 
   const handleLogout = async () => {
-    await logout();
-    dispatch(clearRole());
-    console.log("User logged out");
-    router.replace("/");
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            dispatch(clearRole());
+            console.log("User logged out");
+            router.replace("/");
+          },
+        },
+      ]
+    );
   };
 
   return (
