@@ -286,13 +286,6 @@ export default function AnalyticsScreen() {
             </View>
         </View>
       )}
-
-      {/* No data message */}
-      {!schoolAnalytics && !globalAnalytics && (
-        <View style={styles.section}>
-          <Text style={styles.noDataText}>No analytics data available</Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
