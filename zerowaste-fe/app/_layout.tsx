@@ -101,7 +101,6 @@ export default function RootLayout() {
             headerTintColor: "#fff",
           }}
         />
-      </Stack>  
       <Stack.Screen 
         name="school-select" 
         options={{
@@ -113,6 +112,7 @@ export default function RootLayout() {
           headerTintColor: '#fff',
         }}
       />
+      </Stack> 
     </Provider>
   );
 }
