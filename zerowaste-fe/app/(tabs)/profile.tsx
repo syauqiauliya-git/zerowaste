@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-export default function TabTwoScreen() {
+export default function ProfileScreen() {
 
   return (
     <ParallaxScrollView

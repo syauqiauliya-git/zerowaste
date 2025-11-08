@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchSchools as fetchSchoolsAction } from "@/store/slices/schoolSlice";
 import { fetchSchoolAnalytics, fetchGlobalAnalytics, SchoolAnalytics, GlobalAnalytics } from "@/lib/analytics";
-import { fetchSchools, School } from "@/lib/school";
+import { School } from "@/lib/school";
 import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -34,39 +34,68 @@ export default function AnalyticsScreen() {
       setSelectedSchool(firstSchool);
       await SecureStore.setItemAsync(SELECTED_SCHOOL_KEY, firstSchool._id);
     }
-  }, [role, selectedSchoolId, schools.length]);
+  }, [role, selectedSchoolId, schools]);
+
+  // Memoize loadAnalytics to prevent unnecessary re-renders
+  const loadAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load school analytics for teachers and admins
+      if (role === "teacher" || role === "admin") {
+        // For admin, only load if a school is selected
+        if (role === "admin" && !selectedSchoolId) {
+          setLoading(false);
+          return;
+        }
+        
+        const schoolResponse = await fetchSchoolAnalytics(
+          role === "admin" ? selectedSchoolId || undefined : undefined
+        );
+        setSchoolAnalytics(schoolResponse.data);
+      }
+
+      // Load global analytics for admins only
+      if (role === "admin") {
+        const globalResponse = await fetchGlobalAnalytics();
+        setGlobalAnalytics(globalResponse.data);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch analytics:", err);
+      setError(err.message || "Failed to load analytics");
+    } finally {
+      setLoading(false);
+    }
+  }, [role, selectedSchoolId]);
 
   // Load initial school for admin and fetch schools to Redux
   useEffect(() => {
     if (role === "admin") {
       dispatch(fetchSchoolsAction());
-    } else {
-      loadAnalytics();
-    }
-  }, [role, dispatch]);
-
-  // Load initial school when Redux schools are available
-  useEffect(() => {
-    if (role === "admin" && schools.length > 0 && !selectedSchoolId) {
-      loadInitialSchool();
-    } else if (role === "admin" && schools.length === 0 && !selectedSchoolId) {
-      // No schools available, stop loading
-      setLoading(false);
-    }
-  }, [schools.length, role, selectedSchoolId, loadInitialSchool]);
-
-  // Reload analytics when school changes
-  useEffect(() => {
-    if (role === "admin" && selectedSchoolId) {
-      loadAnalytics();
     } else if (role === "teacher") {
       loadAnalytics();
     }
-    // For admin with no schools, set loading to false to prevent infinite refresh
-    else if (role === "admin" && schools.length === 0) {
-      setLoading(false);
+  }, [role, dispatch, loadAnalytics]);
+
+  // Load initial school when Redux schools are available
+  useEffect(() => {
+    if (role === "admin") {
+      if (schools.length > 0 && !selectedSchoolId) {
+        loadInitialSchool();
+      } else if (schools.length === 0) {
+        // No schools available, stop loading
+        setLoading(false);
+      }
     }
-  }, [schools.length]);
+  }, [schools, role, selectedSchoolId, loadInitialSchool]);
+
+  // Reload analytics when school selection changes
+  useEffect(() => {
+    if (role === "teacher" || (role === "admin" && selectedSchoolId)) {
+      loadAnalytics();
+    }
+  }, [role, selectedSchoolId, loadAnalytics]);
 
   // Check if selected school still exists in Redux state (handles deleted schools)
   useEffect(() => {
@@ -99,7 +128,7 @@ export default function AnalyticsScreen() {
         }
       }
     }
-  }, [schools.length, selectedSchoolId, role, selectedSchool?._id]);
+  }, [schools, selectedSchoolId, role]);
 
   // Check for selected school when screen comes into focus
   useFocusEffect(
@@ -136,39 +165,7 @@ export default function AnalyticsScreen() {
     });
   };
 
-  const loadAnalytics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Load school analytics for teachers and admins
-      if (role === "teacher" || role === "admin") {
-        const schoolResponse = await fetchSchoolAnalytics(
-          role === "admin" ? selectedSchoolId || undefined : undefined
-        );
-        setSchoolAnalytics(schoolResponse.data);
-        // TEMPORARY: Use dummy data
-        // setSchoolAnalytics(dummySchoolAnalytics);
-      }
-
-      // Load global analytics for admins only
-      if (role === "admin") {
-        const globalResponse = await fetchGlobalAnalytics();
-        setGlobalAnalytics(globalResponse.data);
-        // TEMPORARY: Use dummy data
-        // setGlobalAnalytics(dummyGlobalAnalytics);
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch analytics:", err);
-      setError(err.message || "Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Show loading only if we're loading analytics
-  // For admins, wait until a school is selected
-  if (loading && !(role === "admin" && !selectedSchoolId)) {
+  if (loading) {
     return (
       <View style={[styles.mainView, styles.centerContent]}>
         <ActivityIndicator size="large" color="#10B981" />
@@ -176,7 +173,6 @@ export default function AnalyticsScreen() {
       </View>
     );
   }
-
 
   if (error) {
     return (
@@ -189,14 +185,14 @@ export default function AnalyticsScreen() {
   return (
     <ScrollView style={styles.mainView} contentContainerStyle={styles.scrollContent}>
       {/* Global Analytics - for admins only */}
-      {role === "admin" && globalAnalytics && (
+      {role === "admin" && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Global Analytics</Text>
 
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {globalAnalytics.totalReduction.toFixed(1)}
+                {globalAnalytics?.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
               <Text style={styles.statLabel}>kg</Text>
               <Text style={styles.statSubLabel}>Total Reduction</Text>
@@ -204,7 +200,7 @@ export default function AnalyticsScreen() {
 
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {globalAnalytics.averageRating.toFixed(1)}
+                {globalAnalytics?.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
               <Text style={styles.statLabel}>/ 5.0</Text>
               <Text style={styles.statSubLabel}>Avg Rating</Text>
@@ -212,7 +208,7 @@ export default function AnalyticsScreen() {
 
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {globalAnalytics.totalReports}
+                {globalAnalytics?.totalReports ?? 0}
               </Text>
               <Text style={styles.statLabel}>reports</Text>
               <Text style={styles.statSubLabel}>Total Reports</Text>
@@ -222,7 +218,7 @@ export default function AnalyticsScreen() {
       )}
 
       {/* School Analytics - for teachers and admins */}
-      {(role === "teacher" || role === "admin") && schoolAnalytics && (
+      {(role === "teacher" || role === "admin") && (
         <View style={styles.section}>
           {role === "admin" && (
             <View style={styles.selectSchoolContainer}>
@@ -247,15 +243,14 @@ export default function AnalyticsScreen() {
             </View>
           )}
 
-          {
-            role === "teacher" && (
-              <Text style={styles.sectionTitle}>School Analytics</Text>)
-          }
+          {role === "teacher" && (
+            <Text style={styles.sectionTitle}>School Analytics</Text>
+          )}
 
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {schoolAnalytics.totalReduction.toFixed(1)}
+                {schoolAnalytics?.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
               <Text style={styles.statLabel}>kg</Text>
               <Text style={styles.statSubLabel}>Total Reduction</Text>
@@ -263,7 +258,7 @@ export default function AnalyticsScreen() {
 
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {schoolAnalytics.averageRating.toFixed(1)}
+                {schoolAnalytics?.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
               <Text style={styles.statLabel}>/ 5.0</Text>
               <Text style={styles.statSubLabel}>Avg Rating</Text>
@@ -271,7 +266,7 @@ export default function AnalyticsScreen() {
 
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
-                {schoolAnalytics.totalReports}
+                {schoolAnalytics?.totalReports ?? 0}
               </Text>
               <Text style={styles.statLabel}>reports</Text>
               <Text style={styles.statSubLabel}>Total Reports</Text>
@@ -281,7 +276,7 @@ export default function AnalyticsScreen() {
             <View style={styles.trendSection}>
               <Text style={styles.trendTitle}>Waste Trend</Text>
               <View style={styles.chartContainer}>
-                <BarChart data={schoolAnalytics.trend} height={220} />
+                <BarChart data={schoolAnalytics?.trend || []} height={220} />
               </View>
             </View>
         </View>
@@ -380,12 +375,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
-  },
-  noDataText: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    paddingVertical: 20,
   },
   selectButton: {
     flexDirection: "row",
