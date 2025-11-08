@@ -12,7 +12,12 @@ const calcAverageRating = (likes, dislikes) => {
 // GET /api/analytics/school
 // Akses: teacher, admin
 export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
-  const { school_id, role } = req.user;
+  const { school_id: userSchoolId, role } = req.user;
+  
+  // For admins, allow query parameter; for teachers, use user's school_id
+  const school_id = role === 'admin' && req.query.school_id 
+    ? req.query.school_id 
+    : userSchoolId;
 
   if (!school_id) return next(new AppError('School ID tidak ditemukan di user context', 400));
 

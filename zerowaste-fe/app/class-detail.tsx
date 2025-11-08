@@ -1,4 +1,3 @@
-import { getRole } from "@/lib/auth-storage";
 import { Class, fetchClassDetail } from "@/lib/class";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteClass, updateClass } from "@/store/slices/classSlice";
@@ -18,8 +17,8 @@ function ClassDetail() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.classes);
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
   const [classDetail, setClassDetail] = useState<Class | null>(null);
-  const [role, setRole] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     class_name: "",
     grade_level: "",
@@ -92,10 +91,6 @@ function ClassDetail() {
 
   useEffect(() => {
     fetchClassDetailData();
-    getRole().then((role) => {
-      console.log("Role:", role);
-      setRole(role);
-    });
   }, [classId]);
 
   return (

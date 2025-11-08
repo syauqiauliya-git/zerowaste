@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs } from "expo-router";
-import { useEffect, useState } from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
@@ -9,18 +8,39 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image } from "react-native";
-import { getRole } from "@/lib/auth-storage";
+import { Image, TouchableOpacity, Alert } from "react-native";
+import { logout } from "@/lib/auth";
+import { router } from "expo-router";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { clearRole } from "@/store/slices/authSlice";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [role, setRole] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
 
-  useEffect(() => {
-    getRole().then((userRole) => {
-      setRole(userRole?.toLowerCase() || null);
-    });
-  }, []);
+  const handleLogout = async () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            dispatch(clearRole());
+            console.log("User logged out");
+            router.replace("/");
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <Tabs
@@ -34,6 +54,16 @@ export default function TabLayout() {
             style={{ width: 122, height: 32, marginLeft: 15 }}
             resizeMode="contain"
           />
+        ),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={{
+              marginRight: 25,
+            }}
+          >
+            <MaterialIcons name="logout" size={23} color="#fff" />
+          </TouchableOpacity>
         ),
         headerStyle: {
           backgroundColor: "#10B981",
