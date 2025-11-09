@@ -8,7 +8,7 @@ const router = express.Router();
 
 // GET All Schools: Accessible to Admin and SPPG Staff (needs global list visibility)
 router.route('/')
-  .get(protect, restrictTo('admin', 'sppg_staff'), schoolController.getAllSchools); 
+  .get(schoolController.getAllSchools); 
 
 // GET Detail School: Accessible to Admin, and Teachers for contextual access.
 // Teachers require special logic (getSchoolWithContext) to ensure they only see their own school.
