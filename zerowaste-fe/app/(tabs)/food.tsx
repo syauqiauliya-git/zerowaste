@@ -14,16 +14,6 @@ export default function FoodScreen() {
   const { menus: foodList, loading } = useAppSelector((state) => state.menus)
 
   useEffect(() => {
-    const checkRole = async () => {
-      const userRole = await getRole()
-      if (userRole?.toLowerCase() !== "sppg_staff") {
-        router.replace("/(tabs)/home")
-      }
-    }
-    checkRole()
-  }, [router])
-
-  useEffect(() => {
     dispatch(fetchMenus())
   }, [dispatch])
 
