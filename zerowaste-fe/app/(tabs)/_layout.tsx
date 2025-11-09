@@ -127,6 +127,18 @@ export default function TabLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: "Reports",
+          // Only SPPG staff can see this tab
+          href: role === "sppg_staff" ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="assessment" size={28} color={color} />
+          ),
+        }}
+      />
+
       {/* Settings tab: only for admin */}
       <Tabs.Screen
         name="settings"

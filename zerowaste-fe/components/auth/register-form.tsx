@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -14,26 +14,35 @@ import { AuthHeader } from "@/components/ui/auth-header";
 import { Colors } from "@/constants/theme";
 import { registerApi } from "@/lib/auth";
 import { saveToken } from "@/lib/auth-storage";
-import { useAppDispatch } from "@/store/hooks";
-import { setRole } from "@/store/slices/authSlice";
+import * as SecureStore from 'expo-secure-store';
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useRouter, useFocusEffect } from 'expo-router';
+import { fetchSchools } from "@/store/slices/schoolSlice";
+import { School } from "@/lib/school";
 
 type RegisterFormProps = {
   onSignIn?: () => void;
 };
 
+const SELECTED_SCHOOL_KEY = "selected_school_id";
+
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { schools } = useAppSelector((state) => state.schools);
+  
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("");
   const [roleOpen, setRoleOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [sekolahId, setSekolahId] = useState("");
   const [sppgId, setSppgId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
+  const [role, setRole] = useState<string>("")
   const roles = ["Teacher", "SPPG", "Admin"];
 
   // Map visible role labels to backend-accepted values
@@ -50,19 +59,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
       setLoading(true);
       setError(null);
 
-      // Validate IDs depending on role
-      const trimmedSekolah = sekolahId.trim();
-      const trimmedSppg = sppgId.trim();
-
-      if (selectedBackendRole === "teacher") {
-        const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSekolah);
-        if (!isValidObjectId) {
-          setError(
-            "Sekolah ID harus berupa ObjectId 24 karakter hexadecimal (mis. 6522a4ab0b83f5a8ab123456)"
-          );
-          return;
-        }
+      if (!selectedSchoolId && selectedBackendRole === "teacher") {
+        setError("Please select a school for Teacher role");
+        return;
       }
+
+      // Validate IDs depending on role
+      const trimmedSekolah = selectedSchoolId?.trim();
+      const trimmedSppg = sppgId.trim();
 
       if (selectedBackendRole === "sppg_staff") {
         const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSppg);
@@ -89,7 +93,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
       // save token and role (saveToken expects token and role)
       await saveToken(response.token, backendRole);
       // Update Redux store with the role immediately
-      dispatch(setRole(backendRole));
       onSignIn?.();
     } catch (e: any) {
       setError(e?.message || "Register failed");
@@ -101,6 +104,54 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
   const toggleRole = (value: string) => {
     setRole(value);
     setRoleOpen(false);
+  };
+  
+  // Load selected school from storage
+  const loadSelectedSchool = useCallback(async () => {
+    try {
+      const storedSchoolId = await SecureStore.getItemAsync(SELECTED_SCHOOL_KEY);
+      if (storedSchoolId) {
+        setSelectedSchoolId(storedSchoolId);
+        // Use Redux state to find the school
+        const school = schools.find((s) => s._id === storedSchoolId);
+        if (school) {
+          setSelectedSchool(school);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to get selected school:", err);
+    }
+  }, [schools]);
+
+  useEffect(() => {
+    // Fetch schools if not already loaded
+    if (schools.length === 0) {
+      dispatch(fetchSchools());
+    }
+  }, [dispatch, schools.length]);
+
+  // Load selected school when schools are available
+  useEffect(() => {
+    if (schools.length > 0) {
+      loadSelectedSchool();
+    }
+  }, [schools, loadSelectedSchool]);
+
+  // Check for selected school when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadSelectedSchool();
+    }, [loadSelectedSchool])
+  );
+
+  const handleSelectSchool = () => {
+    router.push({
+      pathname: "/school-select",
+      params: { 
+        schoolId: selectedSchoolId || "",
+        returnPath: "/food-create"
+      }
+    });
   };
 
   return (
@@ -135,23 +186,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
           {/* School ID (only for Teacher) */}
           {selectedBackendRole === "teacher" && (
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>School ID</Text>
-              <View style={styles.inputWrapper}>
+              <Text style={styles.label}>School</Text>
+              <Pressable
+                style={styles.selectButton}
+                onPress={handleSelectSchool}
+              >
+                <Text style={[styles.selectText, !selectedSchool && styles.selectPlaceholder]}>
+                  {schools.length === 0 
+                    ? "No school selected" 
+                    : selectedSchool 
+                      ? selectedSchool.school_name 
+                      : "Select a school"}
+                </Text>
                 <Ionicons
-                  name="school-outline"
+                  name="chevron-forward"
                   size={20}
-                  color="#6b7280"
-                  style={styles.icon}
+                  color="#6B7280"
                 />
-                <TextInput
-                  value={sekolahId}
-                  onChangeText={setSekolahId}
-                  placeholder="Mongo ObjectId (24 hex)"
-                  placeholderTextColor="#9ca3af"
-                  style={styles.input}
-                  autoCapitalize="none"
-                />
-              </View>
+              </Pressable>
             </View>
           )}
 
@@ -446,6 +498,30 @@ const styles = StyleSheet.create({
     color: Colors.light.secondary,
     fontWeight: "600",
     fontSize: 13,
+  },
+  selectButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: "#f3f4f6",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    paddingHorizontal: 14,
+    minHeight: 52,
+    shadowColor: "#064E3B",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  selectText: {
+    fontSize: 14,
+    color: '#111827',
+    flex: 1,
+  },
+  selectPlaceholder: {
+    color: '#9CA3AF',
   },
 });
 

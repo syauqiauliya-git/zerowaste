@@ -1,5 +1,3 @@
-"use client";
-
 import { Ionicons } from "@expo/vector-icons";
 import type React from "react";
 import { useState } from "react";
@@ -18,15 +16,15 @@ import { AuthHeader } from "@/components/ui/auth-header";
 import { Colors } from "@/constants/theme";
 import { loginApi } from "@/lib/auth";
 import { saveToken } from "@/lib/auth-storage";
-import { useAppDispatch } from "@/store/hooks";
-import { setRole } from "@/store/slices/authSlice";
+import { fetchRole } from "@/store/slices/authSlice"
+import { useDispatch } from "react-redux";
 
 type LoginFormProps = {
   onSignUp?: () => void;
 };
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,9 +37,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
       setLoading(true);
       setError(null);
       const response = await loginApi({ email: email.trim(), password });
-      await saveToken(response.token, response.role);
-      // Update Redux store with the role immediately
-      dispatch(setRole(response.role));
+      await saveToken(response.token, response.role, response.sppg_id)
+      // Fetch role immediately after login to update Redux store
+      dispatch(fetchRole() as any)
       router.replace("/(tabs)/home");
     } catch (e: any) {
       setError(e?.message || "Login failed");
