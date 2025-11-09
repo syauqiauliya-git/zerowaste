@@ -176,41 +176,50 @@ export default function FoodCreateScreen() {
             />
           </View>
 
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Price (Rp)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={harga}
-              onChangeText={setHarga}
-              placeholder="Enter price"
-            />
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Harga (Rp)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={harga}
+                onChangeText={setHarga}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Protein (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={protein}
+                onChangeText={setProtein}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Protein (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={protein}
-              onChangeText={setProtein}
-              placeholder="Enter protein"
-            />
-          </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Fat (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={lemak}
-              onChangeText={setLemak}
-              placeholder="Enter fat"
-            />
-          </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Carbohydrate (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={karbohidrat}
-              onChangeText={setKarbohidrat}
-              placeholder="Enter carbohydrate"
-            />
+
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Lemak (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={lemak}
+                onChangeText={setLemak}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Karbohidrat (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={karbohidrat}
+                onChangeText={setKarbohidrat}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
           <View style={styles.formControl}>

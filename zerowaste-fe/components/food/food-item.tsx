@@ -46,8 +46,16 @@ export default function FoodItem({ item }: FoodItemProps) {
       ]
     );
   };
+
+  const handleViewFoodDetail = () => {
+    router.push({
+      pathname: "/food-detail",
+      params: { menuId: item._id },
+    });
+  }
+
   return (
-    <View style={styles.foodItem}>
+    <Pressable style={styles.foodItem} onPress={handleViewFoodDetail}>
       <View style={styles.foodItemContent}>
         <View style={styles.foodItemContentItem}>
           <Text style={styles.foodItemText}>{item.nama_menu}</Text>
@@ -86,7 +94,7 @@ export default function FoodItem({ item }: FoodItemProps) {
           <MaterialIcons name="delete" size={23} color="#EF4444" />
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

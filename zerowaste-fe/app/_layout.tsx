@@ -87,6 +87,17 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
+          <Stack.Screen 
+            name="food-detail" 
+            options={{
+              title: 'Menu Detail',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
         </Stack>
       </TokenMonitor>
     </Provider>

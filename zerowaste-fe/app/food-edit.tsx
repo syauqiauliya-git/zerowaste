@@ -1,15 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
-import { StyleSheet, Text, TextInput, View, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
-import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import Header from '@/components/ui/header';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { updateMenu } from '@/store/slices/menuSlice';
-import { fetchSchools } from '@/store/slices/schoolSlice';
-import { getSppgId } from '@/lib/auth-storage';
-import { School } from '@/lib/school';
-import { fetchMenuDetail, Menu } from '@/lib/menu';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as SecureStore from 'expo-secure-store';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
+import Header from "@/components/ui/header";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateMenu } from "@/store/slices/menuSlice";
+import { fetchSchools } from "@/store/slices/schoolSlice";
+import { getSppgId } from "@/lib/auth-storage";
+import { School } from "@/lib/school";
+import { fetchMenuDetail, Menu } from "@/lib/menu";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as SecureStore from "expo-secure-store";
 
 const SELECTED_SCHOOL_KEY = "selected_school_id";
 
@@ -20,7 +30,7 @@ export default function FoodEditScreen() {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.menus);
   const { schools } = useAppSelector((state) => state.schools);
-  
+
   const [selectedSppg, setSelectedSppg] = useState<string>("");
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
@@ -45,7 +55,7 @@ export default function FoodEditScreen() {
       try {
         setLoadingMenu(true);
         const menu = await fetchMenuDetail(menuId);
-        
+
         // Populate form with menu data
         setNamaMenu(menu.nama_menu || "");
         setDeskripsi(menu.deskripsi || "");
@@ -54,9 +64,10 @@ export default function FoodEditScreen() {
         setLemak(menu.lemak?.toString() || "");
         setKarbohidrat(menu.karbohidrat?.toString() || "");
         setIsActive(menu.is_active !== undefined ? menu.is_active : true);
-        
+
         // Set SPPG ID
-        const sppgId = typeof menu.sppg === 'string' ? menu.sppg : (menu.sppg as any)?._id;
+        const sppgId =
+          typeof menu.sppg === "string" ? menu.sppg : (menu.sppg as any)?._id;
         if (sppgId) {
           setSelectedSppg(sppgId);
         } else {
@@ -66,7 +77,7 @@ export default function FoodEditScreen() {
             setSelectedSppg(storedSppgId);
           }
         }
-        
+
         // Set school
         const schoolId = menu.school?._id;
         if (schoolId) {
@@ -83,7 +94,7 @@ export default function FoodEditScreen() {
               setSelectedSchool({
                 _id: schoolId,
                 school_name: menu.school.school_name,
-                address: '',
+                address: "",
                 jml_murid: 0,
                 jml_kelas: 0,
               });
@@ -91,7 +102,7 @@ export default function FoodEditScreen() {
           }
         }
       } catch (error: any) {
-        console.error('Failed to load menu:', error);
+        console.error("Failed to load menu:", error);
         Alert.alert("Error", error.message || "Failed to load menu data");
         router.back();
       } finally {
@@ -105,7 +116,9 @@ export default function FoodEditScreen() {
   // Load selected school from storage
   const loadSelectedSchool = useCallback(async () => {
     try {
-      const storedSchoolId = await SecureStore.getItemAsync(SELECTED_SCHOOL_KEY);
+      const storedSchoolId = await SecureStore.getItemAsync(
+        SELECTED_SCHOOL_KEY
+      );
       if (storedSchoolId && storedSchoolId !== selectedSchoolId) {
         setSelectedSchoolId(storedSchoolId);
         // Use Redux state to find the school
@@ -153,21 +166,28 @@ export default function FoodEditScreen() {
   const handleSelectSchool = () => {
     router.push({
       pathname: "/school-select",
-      params: { 
+      params: {
         schoolId: selectedSchoolId || "",
-        returnPath: "/food-edit"
-      }
+        returnPath: "/food-edit",
+      },
     });
   };
 
   const handleSubmit = async () => {
     const nama = namaMenu.trim();
-    
+
+    console.log("Submitting menu update with values:", {
+      selectedSppg,
+      selectedSchoolId,
+    });
     if (!selectedSppg || !selectedSchoolId || nama.length === 0) {
-      Alert.alert("Validation Error", "Please fill in all required fields (School and Menu Name).");
+      Alert.alert(
+        "Validation Error",
+        "Please fill in all required fields (School and Menu Name)."
+      );
       return;
     }
-    
+
     try {
       const menuData = {
         sppg: selectedSppg,
@@ -181,13 +201,13 @@ export default function FoodEditScreen() {
         is_active: isActive,
       };
 
-      console.log('Menu update data: ', menuData);
-      
+      console.log("Menu update data: ", menuData);
+
       const result = await dispatch(updateMenu({ menuId, menuData })).unwrap();
-      console.log('Menu updated successfully:', result);
+      console.log("Menu updated successfully:", result);
       router.back();
     } catch (error: any) {
-      console.error('Failed to update menu:', error);
+      console.error("Failed to update menu:", error);
       Alert.alert("Error", error.message || "Something went wrong!");
     }
   };
@@ -203,8 +223,8 @@ export default function FoodEditScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <ScrollView
         contentContainerStyle={styles.scrollView}
@@ -215,28 +235,30 @@ export default function FoodEditScreen() {
 
         <View style={styles.container}>
           <View style={styles.formControl}>
-            <Text style={styles.label}>School <Text style={styles.required}>*</Text></Text>
-            <Pressable
-              style={styles.selectButton}
-              onPress={handleSelectSchool}
-            >
-              <Text style={[styles.selectText, !selectedSchool && styles.selectPlaceholder]}>
-                {schools.length === 0 
-                  ? "No school selected" 
-                  : selectedSchool 
-                    ? selectedSchool.school_name 
-                    : "Select a school"}
+            <Text style={styles.label}>
+              School <Text style={styles.required}>*</Text>
+            </Text>
+            <Pressable style={styles.selectButton} onPress={handleSelectSchool}>
+              <Text
+                style={[
+                  styles.selectText,
+                  !selectedSchool && styles.selectPlaceholder,
+                ]}
+              >
+                {schools.length === 0
+                  ? "No school selected"
+                  : selectedSchool
+                  ? selectedSchool.school_name
+                  : "Select a school"}
               </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="#6B7280"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
             </Pressable>
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Menu Name <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>
+              Menu Name <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={styles.inputContainer}
               value={namaMenu}
@@ -257,57 +279,64 @@ export default function FoodEditScreen() {
             />
           </View>
 
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Price (Rp)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={harga}
-              onChangeText={setHarga}
-              placeholder="Enter price"
-              keyboardType="numeric"
-            />
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Harga (Rp)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={harga}
+                onChangeText={setHarga}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Protein (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={protein}
+                onChangeText={setProtein}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Protein (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={protein}
-              onChangeText={setProtein}
-              placeholder="Enter protein"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Fat (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={lemak}
-              onChangeText={setLemak}
-              placeholder="Enter fat"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.formControl}>
-            <Text style={styles.label}>Carbohydrate (g)</Text>
-            <TextInput
-              style={styles.inputContainer}
-              value={karbohidrat}
-              onChangeText={setKarbohidrat}
-              placeholder="Enter carbohydrate"
-              keyboardType="numeric"
-            />
+
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Lemak (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={lemak}
+                onChangeText={setLemak}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Karbohidrat (g)</Text>
+              <TextInput
+                style={styles.inputContainer}
+                value={karbohidrat}
+                onChangeText={setKarbohidrat}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
           <View style={styles.formControl}>
             <Pressable
               style={[
                 styles.checkboxContainer,
-                isActive && styles.checkboxSelected
+                isActive && styles.checkboxSelected,
               ]}
               onPress={() => setIsActive(!isActive)}
             >
               <Text style={styles.checkboxLabel}>Active</Text>
-              <View style={[styles.checkbox, isActive && styles.checkboxChecked]}>
+              <View
+                style={[styles.checkbox, isActive && styles.checkboxChecked]}
+              >
                 {isActive && <Text style={styles.checkboxCheckmark}>✓</Text>}
               </View>
             </Pressable>
@@ -318,7 +347,9 @@ export default function FoodEditScreen() {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>{loading ? 'Updating...' : 'Update'}</Text>
+            <Text style={styles.buttonText}>
+              {loading ? "Updating..." : "Update"}
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -344,107 +375,106 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
   },
   required: {
-    color: '#EF4444',
+    color: "#EF4444",
   },
   inputContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
   },
   textArea: {
     minHeight: 80,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   selectButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
   selectText: {
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
     flex: 1,
   },
   selectPlaceholder: {
-    color: '#9CA3AF',
+    color: "#9CA3AF",
   },
   loadingText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontStyle: 'italic',
+    color: "#6B7280",
+    fontStyle: "italic",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
   },
   checkboxSelected: {
-    borderColor: '#10B981',
+    borderColor: "#10B981",
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#374151',
+    color: "#374151",
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkboxChecked: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: "#10B981",
+    borderColor: "#10B981",
   },
   checkboxCheckmark: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   button: {
-    backgroundColor: '#10B981',
-    flexDirection: 'row',
+    backgroundColor: "#10B981",
+    flexDirection: "row",
     gap: 10,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 16,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
-

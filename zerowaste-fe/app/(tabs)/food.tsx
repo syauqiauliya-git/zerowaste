@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from "react"
 import { useRouter, useFocusEffect } from "expo-router"
-import { getRole } from "@/lib/auth-storage"
 import { StyleSheet, View, Text, Pressable, FlatList, ActivityIndicator } from "react-native"
 import { Menu } from "@/lib/menu"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
