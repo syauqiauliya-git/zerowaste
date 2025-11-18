@@ -10,6 +10,9 @@ router.use(protect, restrictTo('admin'));
 // GET /api/v1/admin/profiles/pending (Review Dashboard)
 router.get('/profiles/pending', adminController.getPendingProfiles);
 
+// GET /api/v1/admin/teachers (Get All Approved Teachers)
+router.get('/teachers', adminController.getApprovedTeachers);
+
 // PUT /api/v1/admin/profiles/:id/approve (Approval Action)
 router.put('/profiles/:id/approve', adminController.approveProfile);
 

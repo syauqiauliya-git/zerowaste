@@ -19,7 +19,10 @@ const getAssignmentModel = (req) => {
 const getPopulateFields = (Model) => {
     // Check constructor name to determine which fields exist on the model
     if (Model.modelName === 'TeacherClassAssignment') {
-        return ['teacher_id', 'class_id'];
+        return [
+            'teacher_id',
+            { path: 'class_id', populate: { path: 'school_id' } }
+        ];
     } else if (Model.modelName === 'SPPGSchoolAssignment') {
         return ['sppg_id', 'school_id'];
     }
@@ -51,9 +54,14 @@ export const getAllAssignments = catchAsync(async (req, res, next) => {
     const Model = getAssignmentModel(req);
     const populateFields = getPopulateFields(Model); // CRITICAL FIX: Get only valid fields
 
-    const assignments = await Model.find()
-        .populate(populateFields) // Apply only the fields that exist on this model
-        .limit(50); // Limit response size for efficiency
+    let query = Model.find().limit(50); // Limit response size for efficiency
+    
+    // Apply populate for each field
+    for (const field of populateFields) {
+        query = query.populate(field);
+    }
+
+    const assignments = await query;
 
     res.status(200).json({
         status: 'success',
@@ -71,8 +79,14 @@ export const getAssignment = catchAsync(async (req, res, next) => {
     const Model = getAssignmentModel(req);
     const populateFields = getPopulateFields(Model); // CRITICAL FIX
 
-    const assignment = await Model.findById(req.params.id)
-        .populate(populateFields);
+    let query = Model.findById(req.params.id);
+    
+    // Apply populate for each field
+    for (const field of populateFields) {
+        query = query.populate(field);
+    }
+
+    const assignment = await query;
 
     if (!assignment) {
         return next(new AppError('Assignment record not found.', 404));
