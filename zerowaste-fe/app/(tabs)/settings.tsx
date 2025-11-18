@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { getRole } from "@/lib/auth-storage";
 import Header from "@/components/ui/header";
 import {
@@ -17,6 +17,7 @@ import {
   Text,
   Pressable,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
@@ -28,8 +29,12 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSchools } from '@/store/slices/schoolSlice';
 import { fetchClasses } from '@/store/slices/classSlice';
+import { fetchSPPGList } from '@/store/slices/sppgSlice';
 import SchoolSettings from '@/components/schools/school-settings';
 import ClassSettings from '@/components/schools/class-settings';
+import SPPGSettings from '@/components/sppg/sppg-settings';
+import TeacherAssignments from '@/components/assignments/teacher-assignments';
+import SPPGAssignments from '@/components/assignments/sppg-assignments';
 
 type CombinedPending = {
   _id: string;
@@ -43,7 +48,8 @@ export default function SettingsScreen() {
   const dispatch = useAppDispatch();
   const { schools, loading: schoolsLoading } = useAppSelector((state) => state.schools);
   const { classes, loading: classesLoading } = useAppSelector((state) => state.classes);
-  const [activeTab, setActiveTab] = useState<"school" | "class" | "user">(
+  const { sppgList, loading: sppgLoading } = useAppSelector((state) => state.sppg);
+  const [activeTab, setActiveTab] = useState<"school" | "class" | "sppg" | "user" | "teacher-assignment" | "sppg-assignment">(
     "school"
   );
   const [pending, setPending] = useState<CombinedPending[]>([]);
@@ -54,6 +60,8 @@ export default function SettingsScreen() {
     name: string;
     profileType: "teacher" | "sppgstaff";
   } | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const tabScrollViewRef = useRef<ScrollView>(null);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -93,8 +101,23 @@ export default function SettingsScreen() {
       dispatch(fetchSchools());
     } else if (activeTab === "class") {
       dispatch(fetchClasses());
+    } else if (activeTab === "sppg") {
+      dispatch(fetchSPPGList());
     }
   }, [router, loadPending, dispatch, activeTab]);
+
+  // Auto-refresh data when screen comes into focus (after navigating back from detail screens)
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === "school") {
+        dispatch(fetchSchools());
+      } else if (activeTab === "class") {
+        dispatch(fetchClasses());
+      } else if (activeTab === "sppg") {
+        dispatch(fetchSPPGList());
+      }
+    }, [dispatch, activeTab])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -112,50 +135,118 @@ export default function SettingsScreen() {
     console.log('Refreshing classes: ', classes);
   };
 
+  const onSPPGRefresh = async () => {
+    dispatch(fetchSPPGList());
+    console.log('Refreshing SPPG: ', sppgList);
+  };
+
   return (
     <View style={styles.mainView}>
       <Header title="Settings" icon="settings" />
 
-      <View style={styles.tabContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === "school" && styles.activeTab]}
-          onPress={() => setActiveTab("school")}
+      <View style={styles.tabScrollView}>
+        <TouchableOpacity
+          style={styles.scrollArrowLeft}
+          onPress={() => {
+            tabScrollViewRef.current?.scrollTo({ x: -150, y: 0, animated: true });
+          }}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "school" && styles.activeTabText,
-            ]}
-          >
-            School
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === "class" && styles.activeTab]}
-          onPress={() => setActiveTab("class")}
+          <MaterialIcons name="chevron-left" size={24} color="#6b7280" />
+        </TouchableOpacity>
+        <ScrollView
+          ref={tabScrollViewRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabContainer}
+          style={styles.tabScrollContent}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "class" && styles.activeTabText,
-            ]}
+          <Pressable
+            style={[styles.tab, activeTab === "school" && styles.activeTab]}
+            onPress={() => setActiveTab("school")}
           >
-            Class
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === "user" && styles.activeTab]}
-          onPress={() => setActiveTab("user")}
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "school" && styles.activeTabText,
+              ]}
+            >
+              School
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "class" && styles.activeTab]}
+            onPress={() => setActiveTab("class")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "class" && styles.activeTabText,
+              ]}
+            >
+              Class
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "sppg" && styles.activeTab]}
+            onPress={() => setActiveTab("sppg")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "sppg" && styles.activeTabText,
+              ]}
+            >
+              SPPG
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "user" && styles.activeTab]}
+            onPress={() => setActiveTab("user")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "user" && styles.activeTabText,
+              ]}
+            >
+              User
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "teacher-assignment" && styles.activeTab]}
+            onPress={() => setActiveTab("teacher-assignment")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "teacher-assignment" && styles.activeTabText,
+              ]}
+            >
+              Teacher Assignment
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "sppg-assignment" && styles.activeTab]}
+            onPress={() => setActiveTab("sppg-assignment")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "sppg-assignment" && styles.activeTabText,
+              ]}
+            >
+              SPPG Assignment
+            </Text>
+          </Pressable>
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.scrollArrowRight}
+          onPress={() => {
+            tabScrollViewRef.current?.scrollTo({ x: 150, y: 0, animated: true });
+          }}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "user" && styles.activeTabText,
-            ]}
-          >
-            User
-          </Text>
-        </Pressable>
+          <MaterialIcons name="chevron-right" size={24} color="#6b7280" />
+        </TouchableOpacity>
       </View>
 
       {activeTab === "school" && (
@@ -174,9 +265,33 @@ export default function SettingsScreen() {
         />
       )}
 
+      {activeTab === "sppg" && (
+        <SPPGSettings
+          sppgList={sppgList}
+          loading={sppgLoading}
+          onRefresh={onSPPGRefresh}
+        />
+      )}
+
       {activeTab === "user" && (
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>User Management</Text>
+          <View style={styles.searchBarContainer}>
+            <View style={styles.searchBar}>
+              <MaterialIcons name="search" size={20} color="#6b7280" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search users..."
+                placeholderTextColor="#9ca3af"
+                value={userSearchQuery}
+                onChangeText={setUserSearchQuery}
+              />
+              {userSearchQuery.length > 0 && (
+                <Pressable onPress={() => setUserSearchQuery("")}>
+                  <MaterialIcons name="close" size={20} color="#6b7280" />
+                </Pressable>
+              )}
+            </View>
+          </View>
           <View style={{ flex: 1 }}>
             {loading ? (
               <ActivityIndicator
@@ -186,7 +301,13 @@ export default function SettingsScreen() {
               />
             ) : (
               <FlatList
-                data={pending}
+                data={pending.filter((item) => {
+                  const query = userSearchQuery.toLowerCase();
+                  return (
+                    item.name.toLowerCase().includes(query) ||
+                    (item.email || "").toLowerCase().includes(query)
+                  );
+                })}
                 keyExtractor={(item) => `${item.profileType}-${item._id}`}
                 refreshControl={
                   <RefreshControl
@@ -237,6 +358,19 @@ export default function SettingsScreen() {
           </View>
         </View>
       )}
+
+      {activeTab === "teacher-assignment" && (
+        <View style={styles.content}>
+          <TeacherAssignments />
+        </View>
+      )}
+
+      {activeTab === "sppg-assignment" && (
+        <View style={styles.content}>
+          <SPPGAssignments />
+        </View>
+      )}
+
       {/* Success popup */}
       <ApproveSuccessModal
         visible={showApprovedPopup}
@@ -354,18 +488,39 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     flex: 1,
   },
-  tabContainer: {
-    flexDirection: "row",
-    marginVertical: 16,
+  tabScrollView: {
+    marginVertical: 0,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  tabScrollContent: {
+    flex: 1,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  scrollArrowLeft: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollArrowRight: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 20,
     alignItems: "center",
     borderBottomWidth: 3,
     borderBottomColor: "transparent",
+    minWidth: 100,
   },
   activeTab: {
     borderBottomColor: "#10B981",
@@ -381,6 +536,30 @@ const styles = StyleSheet.create({
   content: {
     marginTop: 16,
     flex: 1,
+  },
+  searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#111827",
+    padding: 0,
   },
   sectionTitle: {
     fontSize: 18,
@@ -501,5 +680,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
     marginTop: 4,
+  },
+  comingSoon: {
+    fontSize: 14,
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 24,
+    fontStyle: "italic",
   },
 });

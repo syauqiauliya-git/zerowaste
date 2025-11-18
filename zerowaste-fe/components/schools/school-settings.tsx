@@ -124,7 +124,8 @@ export default function SchoolSettings({
 
 const styles = StyleSheet.create({
   content: {
-    marginTop: 16,
+    marginTop: 0,
+    paddingTop: 16,
     flex: 1,
   },
   searchBarContainer: {

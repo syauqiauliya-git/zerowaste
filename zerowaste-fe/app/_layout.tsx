@@ -10,8 +10,8 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="school-detail" 
+          <Stack.Screen
+            name="school-detail"
             options={{
               title: 'School Detail',
               presentation: 'modal',
@@ -21,8 +21,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="school-create" 
+          <Stack.Screen
+            name="school-create"
             options={{
               title: 'Create School',
               presentation: 'modal',
@@ -32,8 +32,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="class-create" 
+          <Stack.Screen
+            name="class-create"
             options={{
               title: 'Create Class',
               presentation: 'modal',
@@ -43,8 +43,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="class-detail" 
+          <Stack.Screen
+            name="class-detail"
             options={{
               title: 'Class Detail',
               presentation: 'modal',
@@ -54,8 +54,30 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="school-select" 
+          <Stack.Screen
+            name="sppg-create"
+            options={{
+              title: 'Create SPPG',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
+          <Stack.Screen
+            name="sppg-detail"
+            options={{
+              title: 'SPPG Detail',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
+          <Stack.Screen
+            name="school-select"
             options={{
               title: 'Select School',
               presentation: 'modal',
@@ -65,8 +87,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="food-create" 
+          <Stack.Screen
+            name="food-create"
             options={{
               title: 'Create Menu',
               presentation: 'modal',
@@ -76,8 +98,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="food-edit" 
+          <Stack.Screen
+            name="food-edit"
             options={{
               title: 'Edit Menu',
               presentation: 'modal',
@@ -87,8 +109,8 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
-          <Stack.Screen 
-            name="food-detail" 
+          <Stack.Screen
+            name="food-detail"
             options={{
               title: 'Menu Detail',
               presentation: 'modal',
