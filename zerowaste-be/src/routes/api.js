@@ -7,8 +7,9 @@ import analyticsRouter from './analyticsRoutes.js';
 import sppgRouter from './sppgRoutes.js';
 import sppgStaffRouter from './sppgStaffRoutes.js';
 import assignmentRouter from './assignmentRoutes.js';
-import adminRouter from './adminRoutes.js'; // NEW IMPORT
+import adminRouter from './adminRoutes.js'; 
 import classRouter from './classRoutes.js';
+import userRouter from './userRoutes.js'; 
 
 const router = express.Router();
 
@@ -21,8 +22,9 @@ router.use('/analytics', analyticsRouter);
 router.use('/sppg', sppgRouter);
 router.use('/sppg-staff', sppgStaffRouter);
 router.use('/assignments', assignmentRouter);
-router.use('/admin', adminRouter); // NEW ROUTE MAPPING
+router.use('/admin', adminRouter); 
 router.use('/classes', classRouter);
+router.use('/users', userRouter);
 
 // 2. Base API Info Route 
 router.get('/', (req, res) => {
@@ -41,8 +43,9 @@ router.get('/', (req, res) => {
       sppg: '/api/v1/sppg',
       'sppg-staff': '/api/v1/sppg-staff', 
       assignments: '/api/v1/assignments',
-      admin: '/api/v1/admin', // NEW ENDPOINT INFO
+      admin: '/api/v1/admin', 
       classes: '/api/v1/classes',
+      users: '/api/v1/users',
       base: '/api/v1'
     }
   });

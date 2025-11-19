@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Teacher from '../models/Teacher.js';
 import SPPGStaff from '../models/SPPGStaff.js';
+import TeacherClassAssignment from '../models/TeacherClassAssignment.js'; // Import ZWB10 Model
 import AppError from '../utils/AppError.js';
 
 const signToken = (id, role) => {
@@ -11,18 +12,23 @@ const signToken = (id, role) => {
   });
 };
 
-// HELPER: Retrieves teacher-specific context (simplified helper functions remain outside the main file block for brevity)
+// HELPER: Retrieves teacher-specific context
 const getTeacherContext = async (userId) => {
     const teacherProfile = await Teacher.findOne({ user_id: userId });
     if (!teacherProfile) return { teacher_id: null, name: null, current_class_id: null, school_id: null };
     
-    // NOTE: Using school_id as temporary class context
-    const currentAssignment = { class_id: teacherProfile.school_id }; 
+    // ZWB10 INTEGRATION: Query the assignment table for the active class
+    // This replaces the placeholder logic with real database lookups
+    const currentAssignment = await TeacherClassAssignment.findOne({ 
+        teacher_id: teacherProfile._id, 
+        is_active: true 
+    }).sort({ start_date: -1 }); // Get the most recent active assignment
     
     return {
         teacher_id: teacherProfile._id,
         name: teacherProfile.name,
-        current_class_id: currentAssignment.class_id,
+        // Return the found class ID or null if no assignment exists
+        current_class_id: currentAssignment ? currentAssignment.class_id : null,
         school_id: teacherProfile.school_id
     };
 };
@@ -42,7 +48,7 @@ const getSPPGStaffContext = async (userId) => {
 
 // REGISTER
 export const register = async (req, res, next) => {
-  let user = null; // Declare outside try block for cleanup access
+  let user = null; 
   try {
     const { name, email, password, number, school_id, sppg_id, role } = req.body;
 
@@ -59,17 +65,16 @@ export const register = async (req, res, next) => {
         return next(new AppError('sppg_id diperlukan untuk role sppg_staff', 400));
     }
     
-    // Check if email is already in use
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return next(new AppError('Email sudah digunakan', 400));
     }
     
-    // 2. CREATE CORE USER (Success required before proceeding)
+    // 2. CREATE CORE USER
     user = await User.create({
       username: email.split('@')[0],
       email,
-      password, // Model hook handles hashing
+      password, 
       number,
       role,
       is_active: true
@@ -77,21 +82,22 @@ export const register = async (req, res, next) => {
 
     let context = {};
 
-    // 3. CREATE PROFILE (Wrap in internal try-catch for rollback)
+    // 3. CREATE PROFILE (Transaction Wrapper)
     try {
         if (role === 'teacher') {
+            // Status defaults to PENDING via model default
             const teacher = await Teacher.create({ name, user_id: user._id, school_id });
             context = { teacher_id: teacher._id, name: teacher.name, school_id };
 
         } else if (role === 'sppg_staff') {
+             // Status defaults to PENDING via model default
             const staff = await SPPGStaff.create({ name, user_id: user._id, sppg_id });
             context = { staff_id: staff._id, name: staff.name, sppg_id };
         }
     } catch (profileError) {
-        // If profile creation fails (e.g., invalid FK), delete the core User account (Rollback)
+        // ROLLBACK: Delete the user if profile creation fails
         await User.findByIdAndDelete(user._id);
-        // Throw a generic error to the global handler
-        return next(new AppError('Registrasi gagal. ID afiliasi (Sekolah/SPPG) tidak valid atau hilang.', 400));
+        return next(new AppError('Registrasi gagal. ID afiliasi tidak valid atau terjadi kesalahan database.', 400));
     }
 
     const token = signToken(user._id, role);
@@ -105,15 +111,15 @@ export const register = async (req, res, next) => {
       token
     });
   } catch (err) {
-    // Catch-all for unique key violations (like existing email) or other general errors
-    if (user && err.code !== 11000) { // If user was created but error wasn't unique key violation, clean up
+    // Catch-all cleanup for other errors (excluding unique email error which is handled above)
+    if (user && err.code !== 11000) { 
         await User.findByIdAndDelete(user._id);
     }
     next(err);
   }
 };
 
-// LOGIN (remains the same)
+// LOGIN
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -129,7 +135,7 @@ export const login = async (req, res, next) => {
     await user.save();
 
     let context = {};
-    let profileStatus = 'APPROVED'; 
+    let profileStatus = 'APPROVED'; // Admin/default users are implicitly approved
 
     if (user.role === 'teacher') {
       context = await getTeacherContext(user._id);
@@ -146,6 +152,7 @@ export const login = async (req, res, next) => {
       profileStatus = staffProfile ? staffProfile.status : 'REJECTED'; 
     }
 
+    // SECURITY GATE: Check Status
     if (profileStatus !== 'APPROVED') {
         if (profileStatus === 'PENDING') {
             return next(new AppError('Akun Anda menunggu persetujuan dari Administrator.', 403));
