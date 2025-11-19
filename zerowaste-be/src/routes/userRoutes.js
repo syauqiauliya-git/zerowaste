@@ -4,7 +4,7 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All user profile endpoints require authentication
+// All user profiles endpoints require authentication
 router.use(protect);
 
 // GET /api/v1/users/me - Get current user profile (read)
