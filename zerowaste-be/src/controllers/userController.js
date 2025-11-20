@@ -18,20 +18,15 @@ const getProfile = async (user) => {
 // GET /api/v1/users/me - Get the current authenticated user's profile
 export const getMe = catchAsync(async (req, res, next) => {
     // req.user is guaranteed to be present and authenticated by the 'protect' middleware
-    const user = req.user; 
-    
-    // Fetch the linked profile data (Teacher or SPPGStaff)
-    const profile = await getProfile(user);
+    const user = req.user;
 
-    if (!profile) {
-        return next(new AppError('Profil pengguna tidak ditemukan.', 404));
-    }
+    const profile = await getProfile(user);
 
     res.status(200).json({
         status: 'success',
         data: {
             user_info: user, // Core User data (email, role)
-            profile_info: profile // Linked Teacher/Staff data (name, school/sppg context)
+            profile_info: profile || null // Linked Teacher/Staff data (or null for admin)
         }
     });
 });
@@ -57,10 +52,10 @@ export const updateMe = catchAsync(async (req, res, next) => {
         new: true,
         runValidators: true
     });
-    
+
     // 2. Update the linked profile (e.g., Teacher name) if provided
     let profile = await getProfile(updatedUser);
-    
+
     if (req.body.name && profile) {
          // Assuming the name field is common to Teacher/SPPGStaff and can be updated
          profile = await profile.constructor.findByIdAndUpdate(profile._id, { name: req.body.name }, { new: true });
