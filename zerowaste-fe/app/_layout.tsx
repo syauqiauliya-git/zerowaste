@@ -120,6 +120,17 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
+          <Stack.Screen
+            name="qr-scanner"
+            options={{
+              title: 'QR Scanner',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
         </Stack>
       </TokenMonitor>
     </Provider>

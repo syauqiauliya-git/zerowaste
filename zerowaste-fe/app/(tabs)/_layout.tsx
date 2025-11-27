@@ -8,7 +8,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image, TouchableOpacity, Alert } from "react-native";
+import { Image, TouchableOpacity, Alert, View } from "react-native";
 import { logout } from "@/lib/auth";
 import { router } from "expo-router";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -18,6 +18,10 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
+
+  const handleNavigateToQrScanner = () => {
+    router.push("/qr-scanner");
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -56,14 +60,28 @@ export default function TabLayout() {
           />
         ),
         headerRight: () => (
-          <TouchableOpacity
-            onPress={handleLogout}
+          <View
             style={{
-              marginRight: 25,
+              flexDirection: "row",
+              gap: 16,
+              alignItems: "center",
+              marginRight: 20,
             }}
           >
-            <MaterialIcons name="logout" size={23} color="#fff" />
-          </TouchableOpacity>
+            {role === "teacher" && (
+              <TouchableOpacity
+                onPress={handleNavigateToQrScanner}
+                style={{
+                  marginRight: 16,
+                }}
+              >
+                <MaterialIcons name="qr-code-scanner" size={23} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={handleLogout}>
+              <MaterialIcons name="logout" size={23} color="#fff" />
+            </TouchableOpacity>
+          </View>
         ),
         headerStyle: {
           backgroundColor: "#10B981",
