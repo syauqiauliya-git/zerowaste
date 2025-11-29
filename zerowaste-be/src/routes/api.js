@@ -4,8 +4,6 @@ import schoolRouter from './schoolRoutes.js';
 import menuRouter from './menuRoutes.js';
 import reportRouter from './reportRoutes.js';
 import analyticsRouter from './analyticsRoutes.js';
-import classAnalyticsRouter from './classAnalyticsRoutes.js';
-import sppgAnalyticsRouter from './sppgAnalyticsRoutes.js';
 import sppgRouter from './sppgRoutes.js';
 import sppgStaffRouter from './sppgStaffRoutes.js';
 import assignmentRouter from './assignmentRoutes.js';
@@ -21,8 +19,6 @@ router.use('/schools', schoolRouter);
 router.use('/menus', menuRouter); 
 router.use('/reports', reportRouter);
 router.use('/analytics', analyticsRouter);
-router.use('/analytics/sppg', sppgAnalyticsRouter);
-router.use('/analytics/class', classAnalyticsRouter);
 router.use('/sppg', sppgRouter);
 router.use('/sppg-staff', sppgStaffRouter);
 router.use('/assignments', assignmentRouter);
@@ -44,8 +40,6 @@ router.get('/', (req, res) => {
       menus: '/api/v1/menus',
       reports: '/api/v1/reports',
       analytics: '/api/v1/analytics',
-      analyticsSppg: '/api/v1/analytics/sppg',
-      analyticsClass: '/api/v1/analytics/class',
       sppg: '/api/v1/sppg',
       'sppg-staff': '/api/v1/sppg-staff',
       assignments: '/api/v1/assignments',
