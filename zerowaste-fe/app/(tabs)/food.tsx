@@ -1,29 +1,36 @@
-import { useEffect, useCallback } from "react"
-import { useRouter, useFocusEffect } from "expo-router"
-import { StyleSheet, View, Text, Pressable, FlatList, ActivityIndicator } from "react-native"
-import { Menu } from "@/lib/menu"
-import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { fetchMenus } from "@/store/slices/menuSlice"
-import FoodItem from "@/components/food/food-item"
-import FoodStatistics from "@/components/food/food-statistics"
+import { useEffect, useCallback } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Pressable,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import { Menu } from "@/lib/menu";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchMenus } from "@/store/slices/menuSlice";
+import FoodItem from "@/components/food/food-item";
+import FoodStatistics from "@/components/food/food-statistics";
 
 export default function FoodScreen() {
-  const router = useRouter()
-  const dispatch = useAppDispatch()
-  const { menus: foodList, loading } = useAppSelector((state) => state.menus)
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { menus: foodList, loading } = useAppSelector((state) => state.menus);
 
   useEffect(() => {
-    dispatch(fetchMenus())
-  }, [dispatch])
+    dispatch(fetchMenus());
+  }, [dispatch]);
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchMenus())
+      dispatch(fetchMenus());
     }, [dispatch])
-  )
+  );
 
   const renderFoodItem = ({ item }: { item: Menu }) => {
-    return <FoodItem item={item} />;
+    return (<FoodItem item={item} />);
   };
 
   return (
@@ -34,7 +41,10 @@ export default function FoodScreen() {
           <Text>Track and manage food inventory</Text>
         </View>
 
-        <Pressable style={styles.addFoodButton} onPress={() => router.push("/food-create")}>
+        <Pressable
+          style={styles.addFoodButton}
+          onPress={() => router.push("/food-create")}
+        >
           <Text style={styles.addFoodButtonText}>+ Add Food</Text>
         </Pressable>
       </View>
@@ -42,26 +52,26 @@ export default function FoodScreen() {
       <FoodStatistics menus={foodList} />
 
       <View style={styles.foodList}>
-        <View>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#10B981" />
-              <Text style={styles.loadingText}>Loading menus...</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={foodList}
-              renderItem={renderFoodItem}
-              ListEmptyComponent={<Text style={styles.emptyText}>No food found</Text>}
-              keyExtractor={(item) => item._id}
-              showsVerticalScrollIndicator={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
-          )}
-        </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10B981" />
+            <Text style={styles.loadingText}>Loading menus...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={foodList}
+            renderItem={renderFoodItem}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No food found</Text>
+            }
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+          />
+        )}
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -116,4 +126,4 @@ const styles = StyleSheet.create({
   separator: {
     height: 12,
   },
-})
+});

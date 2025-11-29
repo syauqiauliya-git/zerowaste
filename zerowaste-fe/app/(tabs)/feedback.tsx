@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Colors } from "@/constants/theme";
 import ImagePicker from "@/components/feedback/image-picker";
-import { sendFeedback } from "@/lib/report";
+import { sendReport } from "@/lib/report";
 
 const DetailField = ({
   label,
@@ -97,7 +97,7 @@ export default function FeedbackScreen() {
     }
     try {
       setIsLoading(true);
-      await sendFeedback(scannedData!, feedbackMessage, selectedImage);
+      await sendReport(scannedData!, feedbackMessage, selectedImage);
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Something went wrong!");
