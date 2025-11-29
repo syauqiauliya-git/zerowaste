@@ -1,7 +1,6 @@
 "use client";
 
-import { Tabs } from "expo-router";
-import { useEffect, useState } from "react";
+import { Tabs , router } from "expo-router";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
@@ -9,18 +8,19 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image } from "react-native";
-import { getRole } from "@/lib/auth-storage";
+import { Image, TouchableOpacity, View } from "react-native";
+
+import { useAppSelector } from "@/store/hooks";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [role, setRole] = useState<string | null>(null);
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
 
-  useEffect(() => {
-    getRole().then((userRole) => {
-      setRole(userRole?.toLowerCase() || null);
-    });
-  }, []);
+  const handleNavigateToQrScanner = () => {
+    router.push("/qr-scanner");
+  };
+
+  // Logout is handled inside Profile screen now; header shows Notifications button
 
   return (
     <Tabs
@@ -34,6 +34,30 @@ export default function TabLayout() {
             style={{ width: 122, height: 32, marginLeft: 15 }}
             resizeMode="contain"
           />
+        ),
+        headerRight: () => (
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 16,
+              alignItems: "center",
+              marginRight: 20,
+            }}
+          >
+            {role === "teacher" && (
+              <TouchableOpacity
+                onPress={handleNavigateToQrScanner}
+                style={{
+                  marginRight: 16,
+                }}
+              >
+                <MaterialIcons name="qr-code-scanner" size={23} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <MaterialIcons name="notifications" size={23} color="#fff" />
+            </TouchableOpacity>
+          </View>
         ),
         headerStyle: {
           backgroundColor: "#10B981",
@@ -93,6 +117,18 @@ export default function TabLayout() {
           href: role === "sppg_staff" ? undefined : null,
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="restaurant" size={28} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: "Reports",
+          // Only SPPG staff can see this tab
+          href: role === "sppg_staff" ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="assessment" size={28} color={color} />
           ),
         }}
       />

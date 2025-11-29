@@ -23,9 +23,12 @@ const initialState: ClassState = {
 // Helper function to map API class to slice class format
 const mapApiClassToSliceClass = (apiClass: any): Class => ({
   _id: apiClass._id,
-  school_id: {
+  school_id: apiClass.school_id ? {
     _id: apiClass.school_id._id,
     school_name: apiClass.school_id.school_name
+  } : {
+    _id: '',
+    school_name: 'Unknown School'
   },
   class_name: apiClass.class_name,
   grade_level: apiClass.grade_level,
@@ -38,8 +41,14 @@ const mapApiClassToSliceClass = (apiClass: any): Class => ({
 export const fetchClasses = createAsyncThunk(
   'classes/fetchClasses',
   async () => {
-    const classes = await apiFetchClasses();
-    return classes.map(mapApiClassToSliceClass);
+    console.log("Fetching classes");
+    const response = await apiFetchClasses();
+    console.log("fetchClasses raw response:", response);
+    console.log("Testinggg");
+    const mappedData = response.data.map(mapApiClassToSliceClass);
+    console.log("Mapped class data!!!!!!!!!!!!:", mappedData);
+    console.log("Testinggg222");
+    return mappedData;
   }
 );
 

@@ -33,7 +33,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDone, delayMs = 
 						</View>
 
 					<View style={styles.footer}>
-						<Text style={styles.tagline}>TRACK, ANALYZE,{"\n"}AND REDUCE{"\n"}FOOD WASTE</Text>
+						<Text style={styles.tagline}>Track, Analyze,{"\n"}And Reduce{"\n"}Food Waste</Text>
 					</View>
 				</LinearGradient>
 			</Pressable>
@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
 	centerImageWrap: {
 		alignItems: 'center',
 		justifyContent: 'center',
+		marginTop: -100,
 	},
 	centerImage: {
 		width: 250,
@@ -70,6 +71,7 @@ const styles = StyleSheet.create({
 	},
 	footer: {
 		alignItems: 'center',
+		marginTop: -12,
 		marginBottom: 8,
 	},
 	tagline: {
@@ -77,7 +79,9 @@ const styles = StyleSheet.create({
 		opacity: 0.95,
 		textAlign: 'center',
 		fontWeight: '800',
-		letterSpacing: 0.5,
+		letterSpacing: 0.6,
+		fontSize: 20,
+		lineHeight: 24,
 	},
 })
 

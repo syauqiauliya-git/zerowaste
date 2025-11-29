@@ -1,11 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
 import schoolReducer from './slices/schoolSlice';
 import classReducer from './slices/classSlice';
+import authReducer from './slices/authSlice';
+import menuReducer from './slices/menuSlice';
+import sppgReducer from './slices/sppgSlice';
 
 export const store = configureStore({
   reducer: {
     schools: schoolReducer,
     classes: classReducer,
+    auth: authReducer,
+    menus: menuReducer,
+    sppg: sppgReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

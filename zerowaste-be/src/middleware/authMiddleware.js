@@ -3,21 +3,23 @@ import { promisify } from 'util';
 import AppError from '../utils/AppError.js';
 import User from '../models/User.js'; 
 import Teacher from '../models/Teacher.js';
-import SPPGStaff from '../models/SPPGStaff.js'; // NEW IMPORT
+import SPPGStaff from '../models/SPPGStaff.js';
+import TeacherClassAssignment from '../models/TeacherClassAssignment.js'; // NEW IMPORT
 import catchAsync from '../utils/catchAsync.js';
-// NOTE: Assuming you have the TeacherClassAssignment model created for ZWB10
-import TeacherClassAssignment from '../models/TeacherClassAssignment.js';
 
-
-// HELPER: Retrieves current class ID logic (Simplified for middleware)
+// HELPER: Retrieves current class ID by querying the real ZWB10 assignment table
 const getCurrentClassId = async (teacherId) => {
-    // *** This logic needs to be implemented when ZWB10 is done. ***
-    // We use the school_id as temporary context; replace with actual class ID logic later.
-    // NOTE: This value must be replaced with a real ID to avoid BSON errors.
-    const currentAssignment = { class_id: 'ASSIGNMENT_LOGIC_PENDING' }; 
+    // DYNAMIC FETCH: Query the assignment table for the active class
+    const currentAssignment = await TeacherClassAssignment.findOne({ 
+        teacher_id: teacherId, 
+        is_active: true 
+    }).sort({ start_date: -1 }); // Get the most recent one
+
+    if (!currentAssignment) {
+        return null; 
+    }
     return currentAssignment.class_id; 
 };
-
 
 // Middleware to check if a user is logged in (Authentication)
 export const protect = catchAsync(async (req, res, next) => {
@@ -34,14 +36,14 @@ export const protect = catchAsync(async (req, res, next) => {
   // 1. Verification of token
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); 
 
-  // 2. Check if user still exists (fetching the core User data)
+  // 2. Check if user still exists
   const currentUser = await User.findById(decoded.id);
 
   if (!currentUser) {
     return next(new AppError('Token milik pengguna ini tidak lagi ada.', 401));
   }
 
-  // --- CRITICAL: Attach Profile Context ---
+  // --- Attach Profile Context ---
   let teacherProfile = null;
   let sppgProfile = null;
   let classContextId = null;
@@ -51,11 +53,11 @@ export const protect = catchAsync(async (req, res, next) => {
   if (currentUser.role === 'teacher') {
     teacherProfile = await Teacher.findOne({ user_id: currentUser._id });
     if (teacherProfile) {
-        // Fetch the active class ID (uses placeholder logic for now)
+        // DYNAMIC FETCH: Now uses the helper to query the real DB
         classContextId = await getCurrentClassId(teacherProfile._id);
         schoolContextId = teacherProfile.school_id;
     }
-  } else if (currentUser.role === 'sppg_staff') { // NEW LOGIC FOR SPPG STAFF
+  } else if (currentUser.role === 'sppg_staff') { 
     sppgProfile = await SPPGStaff.findOne({ user_id: currentUser._id });
     if (sppgProfile) {
         sppgContextId = sppgProfile.sppg_id;
@@ -64,18 +66,18 @@ export const protect = catchAsync(async (req, res, next) => {
 
   // 3. Attach consolidated data directly to req.user
   req.user = {
-      ...currentUser.toObject(), // Spread the User document properties
+      ...currentUser.toObject(),
       teacher_id: teacherProfile ? teacherProfile._id : null,
-      staff_id: sppgProfile ? sppgProfile._id : null, // NEW: Staff ID
-      current_class_id: classContextId,
-      school_id: schoolContextId, // NEW: School ID context
-      sppg_id: sppgContextId, // NEW: SPPG ID context
+      staff_id: sppgProfile ? sppgProfile._id : null,
+      current_class_id: classContextId, // Will now be the valid ObjectId from DB
+      school_id: schoolContextId,
+      sppg_id: sppgContextId,
   };
   
   next();
 });
 
-// Middleware to restrict access based on user role (Authorization)
+// Middleware to restrict access based on user role
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
