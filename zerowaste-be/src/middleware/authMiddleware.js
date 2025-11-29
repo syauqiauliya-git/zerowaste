@@ -53,8 +53,10 @@ export const protect = catchAsync(async (req, res, next) => {
   if (currentUser.role === 'teacher') {
     teacherProfile = await Teacher.findOne({ user_id: currentUser._id });
     if (teacherProfile) {
-        // DYNAMIC FETCH: Now uses the helper to query the real DB
-        classContextId = await getCurrentClassId(teacherProfile._id);
+      // DYNAMIC FETCH: Now uses the helper to query the real DB
+      classContextId = await getCurrentClassId(teacherProfile._id);
+        console.log("Teacher Profile:", teacherProfile);
+        console.log("Current Class ID:", classContextId)
         schoolContextId = teacherProfile.school_id;
     }
   } else if (currentUser.role === 'sppg_staff') { 
