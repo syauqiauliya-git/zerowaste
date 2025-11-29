@@ -116,6 +116,15 @@ export default function QrScannerScreen() {
         }}
         enableTorch={isFlashOn}
       />
+      <View style={styles.maskContainer} pointerEvents="none">
+        <View style={styles.maskRow} />
+        <View style={styles.maskCenterRow}>
+          <View style={styles.maskSide} />
+          <View style={styles.scanArea} />
+          <View style={styles.maskSide} />
+        </View>
+        <View style={styles.maskRow} />
+      </View>
       <View style={styles.overlay}>
         <Text style={styles.instructions}>{scannerStatusText}</Text>
         <View style={styles.actionsRow}>
@@ -147,13 +156,15 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: "absolute",
+    top: 0,
     bottom: 0,
     left: 0,
     right: 0,
+    justifyContent: "flex-end",
     paddingHorizontal: 20,
     paddingTop: 74,
     paddingBottom: 104,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "transparent",
   },
   instructions: {
     color: "#fff",
@@ -267,6 +278,34 @@ const styles = StyleSheet.create({
   },
   permissionText: {
     marginBottom: 16,
+  },
+  maskContainer: {
+    position: "absolute",
+    top: -150,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  maskRow: {
+    flex: 1,
+    width: "100%",
+    backgroundColor: "rgba(0,0,0,0.65)",
+  },
+  maskCenterRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  maskSide: {
+    flex: 1,
+    height: 260,
+    backgroundColor: "rgba(0,0,0,0.65)",
+  },
+  scanArea: {
+    width: 260,
+    aspectRatio: 1,
   },
 });
 
