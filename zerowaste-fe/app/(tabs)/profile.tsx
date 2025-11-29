@@ -24,6 +24,7 @@ export default function ProfileScreen() {
       try {
         setLoading(true)
         const res = await getMe()
+        console.log('Profile data', res.data)
         setUserInfo(res.data.user_info)
         setProfileInfo(res.data.profile_info)
 
