@@ -1,5 +1,5 @@
 import DailyReport from '../models/DailyReport.js';
-import SPPGSubmission from '../models/SPPGSubmission.js';
+import SPPGSchoolAssignment from '../models/SPPGSchoolAssignment.js';
 import AppError from '../utils/AppError.js';
 import catchAsync from '../utils/catchAsync.js';
 import mongoose from 'mongoose';
@@ -134,15 +134,12 @@ export const getSchoolAnalyticsById = catchAsync(async (req, res, next) => {
       totalReports: 0
     };
 
-  const averageRating = calcAverageRating(data.totalLikes, data.totalDislikes);
-
   res.status(200).json({
     status: 'success',
     data
   });
 });
 
-// Hanya admin
 export const getGlobalAnalytics = catchAsync(async (req, res, next) => {
   const reports = await DailyReport.aggregate([
     {
@@ -177,7 +174,6 @@ export const getGlobalAnalytics = catchAsync(async (req, res, next) => {
   });
 });
 
-// Leaderboard
 export const getLeaderboard = catchAsync(async (req, res) => {
   const period = req.query.period || 'all';
   let matchStage = {};
@@ -247,7 +243,6 @@ export const getLeaderboard = catchAsync(async (req, res) => {
   });
 });
 
-// Class
 export const getClassAnalytics = catchAsync(async (req, res, next) => {
   const { role, class_id: teacherClassId } = req.user;
 
@@ -314,7 +309,6 @@ export const getClassAnalytics = catchAsync(async (req, res, next) => {
   });
 });
 
-//SPPG
 export const getSppgAnalytics = catchAsync(async (req, res, next) => {
   const { role, sppg_id: staffSppgId } = req.user;
 
@@ -331,25 +325,38 @@ export const getSppgAnalytics = catchAsync(async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(sppg_id))
     return next(new AppError('SPPG ID tidak valid', 400));
 
-  const submissions = await SPPGSubmission.aggregate([
+  const assignments = await SPPGSchoolAssignment.aggregate([
     {
-      $match: { sppg: new mongoose.Types.ObjectId(sppg_id) }
+      $match: {
+        sppg_id: new mongoose.Types.ObjectId(sppg_id),
+        is_active: true
+      }
     },
     {
-      $group: {
-        _id: null,
-        totalSubmissions: { $sum: 1 }
+      $lookup: {
+        from: 'schools',
+        localField: 'school_id',
+        foreignField: '_id',
+        as: 'school_data'
+      }
+    },
+    { $unwind: '$school_data' },
+    {
+      $project: {
+        school_id: 1,
+        school_name: '$school_data.school_name',
+        start_date: 1,
+        end_date: 1,
+        is_active: 1
       }
     }
   ]);
 
-  const totalSubmissions =
-    submissions.length > 0 ? submissions[0].totalSubmissions : 0;
-
   res.status(200).json({
     status: 'success',
     data: {
-      totalSubmissions
+      totalActiveSchools: assignments.length,
+      assignments
     }
   });
 });
