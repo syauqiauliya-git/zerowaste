@@ -17,9 +17,7 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
       ? req.query.school_id
       : userSchoolId;
 
-  if (!school_id)
-    return next(new AppError('School ID tidak ditemukan', 400));
-
+  if (!school_id) return next(new AppError('School ID tidak ditemukan', 400));
   if (!mongoose.Types.ObjectId.isValid(school_id))
     return next(new AppError('School ID tidak valid', 400));
 
@@ -50,12 +48,7 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
   if (reports.length === 0) {
     return res.status(200).json({
       status: 'success',
-      data: {
-        totalReduction: 0,
-        averageRating: 0,
-        totalReports: 0,
-        trend: []
-      }
+      data: { totalReduction: 0, averageRating: 0, totalReports: 0, trend: [] }
     });
   }
 
@@ -76,10 +69,7 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
       $match: { 'class_data.school': new mongoose.Types.ObjectId(school_id) }
     },
     {
-      $group: {
-        _id: '$report_date',
-        totalWaste: { $sum: '$total_waste_kg' }
-      }
+      $group: { _id: '$report_date', totalWaste: { $sum: '$total_waste_kg' } }
     },
     { $sort: { _id: 1 } }
   ]);
@@ -127,17 +117,9 @@ export const getSchoolAnalyticsById = catchAsync(async (req, res, next) => {
 
   const data =
     reports[0] ||
-    {
-      totalReduction: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      totalReports: 0
-    };
+    { totalReduction: 0, totalLikes: 0, totalDislikes: 0, totalReports: 0 };
 
-  res.status(200).json({
-    status: 'success',
-    data
-  });
+  res.status(200).json({ status: 'success', data });
 });
 
 export const getGlobalAnalytics = catchAsync(async (req, res, next) => {
@@ -155,12 +137,7 @@ export const getGlobalAnalytics = catchAsync(async (req, res, next) => {
 
   const data =
     reports[0] ||
-    {
-      totalReduction: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      totalReports: 0
-    };
+    { totalReduction: 0, totalLikes: 0, totalDislikes: 0, totalReports: 0 };
 
   const averageRating = calcAverageRating(data.totalLikes, data.totalDislikes);
 
@@ -180,8 +157,9 @@ export const getLeaderboard = catchAsync(async (req, res) => {
 
   const now = new Date();
   if (period === 'month') {
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    matchStage.report_date = { $gte: firstDay };
+    matchStage.report_date = {
+      $gte: new Date(now.getFullYear(), now.getMonth(), 1)
+    };
   } else if (period === 'week') {
     const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
     matchStage.report_date = { $gte: startOfWeek };
@@ -220,10 +198,7 @@ export const getLeaderboard = catchAsync(async (req, res) => {
             {
               $multiply: [
                 {
-                  $divide: [
-                    '$totalLikes',
-                    { $add: ['$totalLikes', '$totalDislikes'] }
-                  ]
+                  $divide: ['$totalLikes', { $add: ['$totalLikes', '$totalDislikes'] }]
                 },
                 5
               ]
@@ -244,25 +219,44 @@ export const getLeaderboard = catchAsync(async (req, res) => {
 });
 
 export const getClassAnalytics = catchAsync(async (req, res, next) => {
-  const { role, class_id: teacherClassId } = req.user;
+  const { role, school_id } = req.user;
 
-  const class_id =
-    role === 'admin' && req.params.id
-      ? req.params.id
-      : role === 'teacher'
-      ? teacherClassId
-      : null;
+  if (role !== 'teacher')
+    return next(new AppError('Hanya teacher yang dapat mengakses /class', 403));
 
-  if (!class_id)
-    return next(new AppError('Class ID tidak ditemukan', 400));
+  const classes = await DailyReport.aggregate([
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'class_data'
+      }
+    },
+    { $unwind: '$class_data' },
+    {
+      $match: { 'class_data.school': new mongoose.Types.ObjectId(school_id) }
+    },
+    {
+      $group: {
+        _id: '$class',
+        className: { $first: '$class_data.class_name' },
+        totalWaste: { $sum: '$total_waste_kg' }
+      }
+    }
+  ]);
 
-  if (!mongoose.Types.ObjectId.isValid(class_id))
+  res.status(200).json({ status: 'success', results: classes.length, data: classes });
+});
+
+export const getClassAnalyticsById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
     return next(new AppError('Class ID tidak valid', 400));
 
   const reports = await DailyReport.aggregate([
-    {
-      $match: { class: new mongoose.Types.ObjectId(class_id) }
-    },
+    { $match: { class: new mongoose.Types.ObjectId(id) } },
     {
       $group: {
         _id: null,
@@ -276,54 +270,21 @@ export const getClassAnalytics = catchAsync(async (req, res, next) => {
 
   const data =
     reports[0] ||
-    {
-      totalWaste: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      totalReports: 0
-    };
+    { totalWaste: 0, totalLikes: 0, totalDislikes: 0, totalReports: 0 };
 
   const averageRating = calcAverageRating(data.totalLikes, data.totalDislikes);
 
-  const trend = await DailyReport.aggregate([
-    {
-      $match: { class: new mongoose.Types.ObjectId(class_id) }
-    },
-    {
-      $group: {
-        _id: '$report_date',
-        totalWaste: { $sum: '$total_waste_kg' }
-      }
-    },
-    { $sort: { _id: 1 } }
-  ]);
-
   res.status(200).json({
     status: 'success',
-    data: {
-      totalWaste: data.totalWaste,
-      averageRating,
-      totalReports: data.totalReports,
-      trend
-    }
+    data: { ...data, averageRating }
   });
 });
 
 export const getSppgAnalytics = catchAsync(async (req, res, next) => {
-  const { role, sppg_id: staffSppgId } = req.user;
+  const { role, sppg_id } = req.user;
 
-  const sppg_id =
-    role === 'admin' && req.params.id
-      ? req.params.id
-      : role === 'sppg_staff'
-      ? staffSppgId
-      : null;
-
-  if (!sppg_id)
-    return next(new AppError('SPPG ID tidak ditemukan', 400));
-
-  if (!mongoose.Types.ObjectId.isValid(sppg_id))
-    return next(new AppError('SPPG ID tidak valid', 400));
+  if (role !== 'sppg_staff')
+    return next(new AppError('Hanya SPPG Staff yang dapat mengakses /sppg', 403));
 
   const assignments = await SPPGSchoolAssignment.aggregate([
     {
@@ -346,18 +307,46 @@ export const getSppgAnalytics = catchAsync(async (req, res, next) => {
         school_id: 1,
         school_name: '$school_data.school_name',
         start_date: 1,
-        end_date: 1,
-        is_active: 1
+        end_date: 1
       }
     }
   ]);
 
   res.status(200).json({
     status: 'success',
-    data: {
-      totalActiveSchools: assignments.length,
-      assignments
-    }
+    totalActiveSchools: assignments.length,
+    data: assignments
+  });
+});
+
+export const getSppgAnalyticsById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return next(new AppError('SPPG ID tidak valid', 400));
+
+  const schools = await SPPGSchoolAssignment.aggregate([
+    {
+      $match: {
+        sppg_id: new mongoose.Types.ObjectId(id),
+        is_active: true
+      }
+    },
+    {
+      $lookup: {
+        from: 'schools',
+        localField: 'school_id',
+        foreignField: '_id',
+        as: 'school_data'
+      }
+    },
+    { $unwind: '$school_data' },
+    { $project: { school_id: 1, school_name: '$school_data.school_name' } }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: { totalActiveSchools: schools.length, schools }
   });
 });
 
@@ -367,5 +356,7 @@ export default {
   getGlobalAnalytics,
   getLeaderboard,
   getClassAnalytics,
-  getSppgAnalytics
+  getClassAnalyticsById,
+  getSppgAnalytics,
+  getSppgAnalyticsById
 };
