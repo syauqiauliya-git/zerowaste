@@ -131,6 +131,17 @@ export default function RootLayout() {
               headerTintColor: '#fff',
             }}
           />
+          <Stack.Screen
+            name="notifications"
+            options={{
+              title: 'Back to home',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
         </Stack>
       </TokenMonitor>
     </Provider>
