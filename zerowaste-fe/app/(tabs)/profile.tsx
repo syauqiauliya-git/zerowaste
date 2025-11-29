@@ -4,6 +4,10 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { getMe, updateMe } from '@/lib/user';
 import { Ionicons } from '@expo/vector-icons'
+import { useAppDispatch } from '@/store/hooks';
+import { clearRole } from '@/store/slices/authSlice';
+import { removeToken } from '@/lib/auth-storage';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const [loading, setLoading] = useState(true)
@@ -12,6 +16,8 @@ export default function ProfileScreen() {
   const [profileInfo, setProfileInfo] = useState<any>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({ username: '', number: '', name: '' })
+  const dispatch = useAppDispatch()
+  const router = useRouter()
 
   useEffect(() => {
     async function load() {
@@ -136,6 +142,38 @@ export default function ProfileScreen() {
     >
       <View style={styles.container}>
         {content}
+        {/* Logout button at bottom of Profile tab */}
+        <View style={{ marginTop: 18 }}>
+          <Pressable
+            style={styles.logoutButton}
+            onPress={() => {
+              Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Logout',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await removeToken();
+                      } catch (err) {
+                        console.error('Failed to remove token', err);
+                      }
+                      dispatch(clearRole());
+                      router.replace('/');
+                    },
+                  },
+                ],
+                { cancelable: true }
+              );
+            }}
+          >
+            <MaterialIcons name="logout" size={18} color="#EF4444" style={{ marginRight: 8 }} />
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </Pressable>
+        </View>
       </View>
     </ParallaxScrollView>
   )
@@ -285,4 +323,20 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 12, color: '#6B7280' },
   infoValue: { fontSize: 14, fontWeight: '600', color: '#111827', marginTop: 4 },
   infoInput: { marginTop: 6, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#fff' },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  logoutButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 })
