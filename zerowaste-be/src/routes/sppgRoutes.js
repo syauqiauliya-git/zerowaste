@@ -4,11 +4,13 @@ import { protect, restrictTo } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.route('/')
+  .get(sppgController.getAllSPPG)
+
 // Semua route dilindungi JWT dan role admin
 router.use(protect, restrictTo('admin'));
 
 router.route('/')
-  .get(sppgController.getAllSPPG)
   .post(sppgController.createSPPG);
 
 router.route('/:id')
