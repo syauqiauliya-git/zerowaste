@@ -14,39 +14,47 @@ import { AuthHeader } from "@/components/ui/auth-header";
 import { Colors } from "@/constants/theme";
 import { registerApi } from "@/lib/auth";
 import { saveToken } from "@/lib/auth-storage";
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from "expo-router";
 import { fetchSchools } from "@/store/slices/schoolSlice";
 import { School } from "@/lib/school";
+import { fetchAllSPPG, SPPG } from "@/lib/sppg";
 
 type RegisterFormProps = {
   onSignIn?: () => void;
 };
 
 const SELECTED_SCHOOL_KEY = "selected_school_id";
+const SELECTED_SPPG_KEY = "selected_sppg_id";
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { schools } = useAppSelector((state) => state.schools);
-  
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [sppgId, setSppgId] = useState("");
+
+  // SPPG State
+  const [sppgs, setSppgs] = useState<SPPG[]>([]);
+  const [selectedSppgId, setSelectedSppgId] = useState("");
+  const [selectedSppg, setSelectedSppg] = useState<SPPG | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // School State
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
-  const [role, setRole] = useState<string>("")
+
+  const [role, setRole] = useState<string>("");
   const roles = ["Teacher", "SPPG", "Admin"];
 
-  // Map visible role labels to backend-accepted values
-  // Backend expects: 'teacher' | 'sppg_staff' | 'admin'
   const roleMap: Record<string, string> = {
     Teacher: "teacher",
     SPPG: "sppg_staff",
@@ -64,16 +72,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
         return;
       }
 
-      // Validate IDs depending on role
       const trimmedSekolah = selectedSchoolId?.trim();
-      const trimmedSppg = sppgId.trim();
+      const trimmedSppg = selectedSppgId.trim();
 
       if (selectedBackendRole === "sppg_staff") {
-        const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(trimmedSppg);
-        if (!isValidObjectId) {
-          setError("SPPG ID harus berupa ObjectId 24 karakter hexadecimal");
+        if (!trimmedSppg) {
+          setError("Please select an SPPG");
           return;
         }
+        // Optional: Add specific ObjectId validation if strict
       }
 
       const backendRole = selectedBackendRole;
@@ -90,9 +97,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
         payload.sppg_id = trimmedSppg;
       }
       const response = await registerApi(payload);
-      // save token and role (saveToken expects token and role)
       await saveToken(response.token, backendRole);
-      // Update Redux store with the role immediately
       onSignIn?.();
     } catch (e: any) {
       setError(e?.message || "Register failed");
@@ -105,52 +110,85 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
     setRole(value);
     setRoleOpen(false);
   };
-  
-  // Load selected school from storage
+
+  // --- LOADERS ---
+
+  // 1. Fetch Lists (Schools & SPPGs)
+  useEffect(() => {
+    dispatch(fetchSchools());
+
+    const fetchSppgList = async () => {
+      try {
+        const list = await fetchAllSPPG();
+        setSppgs(list);
+      } catch (err) {
+        console.error("Failed to fetch SPPG list", err);
+      }
+    };
+    fetchSppgList();
+  }, [dispatch]);
+
+  // 2. Load Selected School from Storage
   const loadSelectedSchool = useCallback(async () => {
     try {
-      const storedSchoolId = await SecureStore.getItemAsync(SELECTED_SCHOOL_KEY);
+      const storedSchoolId = await SecureStore.getItemAsync(
+        SELECTED_SCHOOL_KEY
+      );
       if (storedSchoolId) {
         setSelectedSchoolId(storedSchoolId);
-        // Use Redux state to find the school
-        const school = schools.find((s) => s._id === storedSchoolId);
-        if (school) {
-          setSelectedSchool(school);
-        }
+        const school = schools.find((s: any) => s._id === storedSchoolId);
+        if (school) setSelectedSchool(school);
       }
     } catch (err) {
       console.error("Failed to get selected school:", err);
     }
   }, [schools]);
 
-  useEffect(() => {
-    // Fetch schools if not already loaded
-    if (schools.length === 0) {
-      dispatch(fetchSchools());
+  // 3. Load Selected SPPG from Storage
+  const loadSelectedSppg = useCallback(async () => {
+    try {
+      const storedSppgId = await SecureStore.getItemAsync(SELECTED_SPPG_KEY);
+      if (storedSppgId) {
+        setSelectedSppgId(storedSppgId);
+        const sppg = sppgs.find((s) => s._id === storedSppgId);
+        if (sppg) setSelectedSppg(sppg);
+      }
+    } catch (err) {
+      console.error("Failed to get selected SPPG:", err);
     }
-  }, [dispatch, schools.length]);
+  }, [sppgs]); // Helper depends on sppgs list being ready
 
-  // Load selected school when schools are available
+  // 4. Initial Load when lists change
   useEffect(() => {
-    if (schools.length > 0) {
-      loadSelectedSchool();
-    }
-  }, [schools, loadSelectedSchool]);
+    if (schools.length > 0) loadSelectedSchool();
+    if (sppgs.length > 0) loadSelectedSppg();
+  }, [schools, sppgs, loadSelectedSchool, loadSelectedSppg]);
 
-  // Check for selected school when screen comes into focus
+  // 5. Re-check Storage when screen gains focus (navigating back from select screen)
   useFocusEffect(
     useCallback(() => {
       loadSelectedSchool();
-    }, [loadSelectedSchool])
+      loadSelectedSppg(); // <--- THIS WAS MISSING
+    }, [loadSelectedSchool, loadSelectedSppg])
   );
 
   const handleSelectSchool = () => {
     router.push({
       pathname: "/school-select",
-      params: { 
+      params: {
         schoolId: selectedSchoolId || "",
-        returnPath: "/food-create"
-      }
+        returnPath: "/register",
+      },
+    });
+  };
+
+  const handleSelectSppg = () => {
+    router.push({
+      pathname: "/sppg-select",
+      params: {
+        sppgId: selectedSppgId || "",
+        returnPath: "/register",
+      },
     });
   };
 
@@ -183,7 +221,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
             </View>
           </View>
 
-          {/* School ID (only for Teacher) */}
+          {/* School Selector */}
           {selectedBackendRole === "teacher" && (
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>School</Text>
@@ -191,42 +229,42 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
                 style={styles.selectButton}
                 onPress={handleSelectSchool}
               >
-                <Text style={[styles.selectText, !selectedSchool && styles.selectPlaceholder]}>
-                  {schools.length === 0 
-                    ? "No school selected" 
-                    : selectedSchool 
-                      ? selectedSchool.school_name 
-                      : "Select a school"}
+                <Text
+                  style={[
+                    styles.selectText,
+                    !selectedSchool && styles.selectPlaceholder,
+                  ]}
+                >
+                  {schools.length === 0
+                    ? "Loading schools..."
+                    : selectedSchool
+                    ? selectedSchool.school_name
+                    : "Select a school"}
                 </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color="#6B7280"
-                />
+                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
               </Pressable>
             </View>
           )}
 
-          {/* SPPG ID (only for SPPG staff) */}
+          {/* SPPG Selector */}
           {selectedBackendRole === "sppg_staff" && (
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>SPPG ID</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons
-                  name="business-outline"
-                  size={20}
-                  color="#6b7280"
-                  style={styles.icon}
-                />
-                <TextInput
-                  value={sppgId}
-                  onChangeText={setSppgId}
-                  placeholder="SPPG ObjectId (24 hex)"
-                  placeholderTextColor="#9ca3af"
-                  style={styles.input}
-                  autoCapitalize="none"
-                />
-              </View>
+              <Text style={styles.label}>SPPG</Text>
+              <Pressable style={styles.selectButton} onPress={handleSelectSppg}>
+                <Text
+                  style={[
+                    styles.selectText,
+                    !selectedSppg && styles.selectPlaceholder,
+                  ]}
+                >
+                  {sppgs.length === 0
+                    ? "Loading SPPGs..."
+                    : selectedSppg
+                    ? selectedSppg.name
+                    : "Select an SPPG"}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+              </Pressable>
             </View>
           )}
 
@@ -369,15 +407,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSignIn }) => {
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
-  formBox: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
-  },
+  scroll: { flexGrow: 1, paddingBottom: 32 },
+  formBox: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40 },
   title: {
     fontSize: 22,
     fontWeight: "700",
@@ -392,15 +423,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  fieldGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#064E3B",
-    marginBottom: 6,
-  },
+  fieldGroup: { marginBottom: 20 },
+  label: { fontSize: 13, fontWeight: "600", color: "#064E3B", marginBottom: 6 },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -418,16 +442,8 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: "visible",
   },
-  icon: {
-    position: "absolute",
-    left: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: "#111827",
-    paddingVertical: 8,
-  },
+  icon: { position: "absolute", left: 12 },
+  input: { flex: 1, fontSize: 15, color: "#111827", paddingVertical: 8 },
   dropdown: {
     marginTop: 6,
     borderWidth: 1,
@@ -436,19 +452,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     overflow: "hidden",
   },
-  dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  dropdownText: {
-    fontSize: 15,
-    color: "#111827",
-  },
-  rememberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
+  dropdownItem: { paddingVertical: 12, paddingHorizontal: 16 },
+  dropdownText: { fontSize: 15, color: "#111827" },
+  rememberRow: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
   checkbox: {
     width: 22,
     height: 22,
@@ -459,14 +465,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  checkboxChecked: {
-    backgroundColor: "#10b981",
-  },
-  rememberText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#064E3B",
-  },
+  checkboxChecked: { backgroundColor: "#10b981" },
+  rememberText: { fontSize: 15, fontWeight: "600", color: "#064E3B" },
   submitButton: {
     backgroundColor: Colors.light.secondary,
     borderRadius: 10,
@@ -485,24 +485,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.5,
   },
-  signInRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 28,
-  },
-  signInHint: {
-    color: "#6b7280",
-    fontSize: 13,
-  },
+  signInRow: { flexDirection: "row", justifyContent: "center", marginTop: 28 },
+  signInHint: { color: "#6b7280", fontSize: 13 },
   signInLink: {
     color: Colors.light.secondary,
     fontWeight: "600",
     fontSize: 13,
   },
   selectButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#f3f4f6",
     borderRadius: 10,
     borderWidth: 1,
@@ -515,14 +508,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  selectText: {
-    fontSize: 14,
-    color: '#111827',
-    flex: 1,
-  },
-  selectPlaceholder: {
-    color: '#9CA3AF',
-  },
+  selectText: { fontSize: 14, color: "#111827", flex: 1 },
+  selectPlaceholder: { color: "#9CA3AF" },
 });
 
 export default RegisterForm;

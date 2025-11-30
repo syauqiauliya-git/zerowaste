@@ -3,7 +3,7 @@ import { apiFetch } from "./api";
 export interface SPPG {
   _id: string;
   name: string;
-  address?: string;
+  address: string;
   number?: string;
   is_active?: boolean;
   created_at?: string;

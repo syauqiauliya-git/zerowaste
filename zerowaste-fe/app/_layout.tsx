@@ -88,6 +88,17 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="sppg-select"
+            options={{
+              title: 'Select SPPG',
+              presentation: 'modal',
+              headerStyle: {
+                backgroundColor: '#10B981',
+              },
+              headerTintColor: '#fff',
+            }}
+          />
+          <Stack.Screen
             name="food-create"
             options={{
               title: 'Create Menu',
