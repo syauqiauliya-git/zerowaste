@@ -1,29 +1,42 @@
 import Class from '../models/Class.js';
 import School from '../models/School.js';
 import AppError from '../utils/AppError.js';
+import catchAsync from '../utils/catchAsync.js';
 
-// GET semua kelas
-export const getAllClasses = async (req, res, next) => {
-  try {
-    const classes = await Class.find().populate('school_id', 'school_name');
-    res.status(200).json({ status: 'success', data: classes });
-  } catch (err) {
-    next(err);
+// GET All Classes (Context Aware)
+// Used for the Frontend Dropdown
+export const getAllClasses = catchAsync(async (req, res, next) => {
+  const filter = {};
+
+  // If the requester is a Teacher, force the query to their specific school
+  if (req.user.role === 'teacher') {
+      if (!req.user.school_id) {
+          return next(new AppError('Data sekolah guru tidak ditemukan.', 403));
+      }
+      filter.school_id = req.user.school_id;
   }
-};
 
-// GET kelas berdasarkan sekolah
-export const getClassesBySchoolId = async (req, res, next) => {
-  try {
+  // Execute query with the dynamic filter
+  const classes = await Class.find(filter).populate('school_id', 'school_name address');
+
+  res.status(200).json({
+    status: 'success',
+    results: classes.length,
+    data: {
+      classes,
+    },
+  });
+});
+
+// GET Classes by School ID (Admin/Staff Utility)
+export const getClassesBySchoolId = catchAsync(async (req, res, next) => {
     const { schoolId } = req.params;
     
-    // Verify that the school exists
     const school = await School.findById(schoolId);
     if (!school) {
       return next(new AppError('Sekolah tidak ditemukan', 404));
     }
 
-    // Get all classes for this school
     const classes = await Class.find({ school_id: schoolId }).populate('school_id', 'school_name');
     
     res.status(200).json({
@@ -31,64 +44,66 @@ export const getClassesBySchoolId = async (req, res, next) => {
       results: classes.length,
       data: classes
     });
-  } catch (err) {
-    next(err);
-  }
-};
+});
 
-// GET detail kelas
-export const getClassById = async (req, res, next) => {
-  try {
-    const kelas = await Class.findById(req.params.id).populate('school_id', 'school_name');
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
-    res.status(200).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// POST tambah kelas
-export const createClass = async (req, res, next) => {
-  try {
-    const { school_id, class_name, grade_level } = req.body;
-
-    if (!school_id || !class_name || !grade_level) {
-      return next(new AppError('Semua field harus diisi', 400));
+// GET Detail Class
+export const getClassById = catchAsync(async (req, res, next) => {
+    const singleClass = await Class.findById(req.params.id).populate('school_id', 'school_name');
+    
+    if (!singleClass) {
+        return next(new AppError('Kelas tidak ditemukan', 404));
     }
 
-    const kelas = await Class.create({
-      school_id,
-      class_name,
-      grade_level
+    // SECURITY: Ensure teacher can only view class from their own school
+    // This prevents a teacher from guessing an ID to view another school's class
+    if (req.user.role === 'teacher') {
+        const teacherSchoolId = req.user.school_id.toString();
+        const classSchoolId = singleClass.school_id._id.toString();
+        
+        if (teacherSchoolId !== classSchoolId) {
+            return next(new AppError('Anda tidak memiliki akses ke kelas ini.', 403));
+        }
+    }
+
+    res.status(200).json({ 
+        status: 'success', 
+        data: singleClass 
     });
+});
 
-    res.status(201).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
-  }
-};
+// POST Create Class (Admin Only)
+export const createClass = catchAsync(async (req, res, next) => {
+    // Mongoose schema handles the 'required' checks automatically
+    const newClass = await Class.create(req.body);
+    res.status(201).json({ status: 'success', data: newClass });
+});
 
-// PUT update kelas
-export const updateClass = async (req, res, next) => {
-  try {
-    const kelas = await Class.findByIdAndUpdate(req.params.id, req.body, {
+// PUT Update Class (Admin Only)
+export const updateClass = catchAsync(async (req, res, next) => {
+    const updatedClass = await Class.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
-    res.status(200).json({ status: 'success', data: kelas });
-  } catch (err) {
-    next(err);
-  }
-};
+    
+    if (!updatedClass) return next(new AppError('Kelas tidak ditemukan', 404));
+    
+    res.status(200).json({ status: 'success', data: updatedClass });
+});
 
-// DELETE kelas
-export const deleteClass = async (req, res, next) => {
-  try {
-    const kelas = await Class.findByIdAndDelete(req.params.id);
-    if (!kelas) return next(new AppError('Kelas tidak ditemukan', 404));
+// DELETE Class (Admin Only)
+export const deleteClass = catchAsync(async (req, res, next) => {
+    const deletedClass = await Class.findByIdAndDelete(req.params.id);
+    
+    if (!deletedClass) return next(new AppError('Kelas tidak ditemukan', 404));
+    
     res.status(204).json({ status: 'success', data: null });
-  } catch (err) {
-    next(err);
-  }
+});
+
+export default {
+    createClass,
+    getAllClasses,
+    getClassesBySchoolId,
+    getClassById,
+    updateClass,
+    deleteClass,
 };
