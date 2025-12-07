@@ -2,12 +2,12 @@ import DailyReport from '../models/DailyReport.js';
 import AppError from '../utils/AppError.js';
 import catchAsync from '../utils/catchAsync.js';
 import mongoose from 'mongoose';
-import DailyMenu from '../models/DailyMenu.js'; 
+import DailyMenu from '../models/DailyMenu.js';
 import Class from '../models/Class.js'; // NEW IMPORT for validation
 
 // --- HELPER: NEW QR String Parsing (Offline Contract) ---
 const parseQrPayload = (rawString) => {
-  const parts = rawString.split('|'); 
+  const parts = rawString.split('|');
 
   if (parts.length < 4) {
     throw new AppError('Format data QR tidak lengkap (Harus 4 bagian).', 400);
@@ -23,7 +23,7 @@ const parseQrPayload = (rawString) => {
     if (code) acc[code] = (acc[code] || 0) + 1;
     return acc;
   }, {});
-  
+
   const reasonCodeCount = Object.values(reason_breakdown_json).reduce((sum, count) => sum + count, 0);
   const totalInteractions = total_likes + total_dislikes + reasonCodeCount;
 
@@ -36,7 +36,7 @@ const parseQrPayload = (rawString) => {
     total_likes,
     total_dislikes,
     reason_breakdown_json,
-    total_interactions: totalInteractions, 
+    total_interactions: totalInteractions,
   };
 };
 
@@ -45,7 +45,7 @@ const parseQrPayload = (rawString) => {
 export const createReport = catchAsync(async (req, res, next) => {
   // 1. CONTEXT: Get Teacher and School from Session
   // We no longer need current_class_id from the session
-  const { teacher_id, school_id } = req.user; 
+  const { teacher_id, school_id } = req.user;
 
   if (!teacher_id || !school_id) {
     return next(new AppError('Konteks Guru/Sekolah tidak ditemukan. Silakan login ulang.', 400));
@@ -65,8 +65,8 @@ export const createReport = catchAsync(async (req, res, next) => {
   if (!selectedClass) {
       return next(new AppError('Kelas tidak valid atau tidak terdaftar di sekolah Anda.', 403));
   }
-  
-  // 4. PARSE: Extract waste data 
+
+  // 4. PARSE: Extract waste data
   const qrData = parseQrPayload(qr_payload_string);
 
   // 5. LOGIC: Find the Menu ID based on DATE and SCHOOL
@@ -88,14 +88,14 @@ export const createReport = catchAsync(async (req, res, next) => {
 
   // 6. SAVE: Merge everything
   const finalReportData = {
-    ...qrData, 
-    menu: matchedMenu._id, 
+    ...qrData,
+    menu: matchedMenu._id,
     report_date: matchedMenu.menu_date,
-    teacher: teacher_id, 
+    teacher: teacher_id,
     class: class_id, // Uses the verified manual input
     verbal_feedback: verbal_feedback || 'Tidak ada feedback verbal.',
   };
-  
+
   const newReport = await DailyReport.create(finalReportData);
 
   res.status(201).json({
@@ -115,8 +115,22 @@ export const getAllReports = catchAsync(async (req, res, next) => {
   if (req.query.menu_id) filters.menu = req.query.menu_id;
 
   const reports = await DailyReport.find(filters)
-    .populate('teacher', 'name')
-    .populate('class', 'class_name')
+    .populate({
+      path: 'teacher',
+      select: 'name user_id',
+      populate: {
+        path: 'user_id',
+        select: 'email role'
+      }
+    })
+    .populate({
+      path: 'class',
+      select: 'class_name school_id',
+      populate: {
+        path: 'school_id',
+        select: 'school_name'
+      }
+    })
     .populate('menu', 'nama_menu');
 
   res.status(200).json({
