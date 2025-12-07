@@ -283,11 +283,17 @@ export default function TeacherAssignments() {
                 <Text style={styles.label}>Class</Text>
                 <View style={styles.pickerContainer}>
                   <TouchableOpacity
-                    style={styles.pickerButton}
+                    style={[styles.pickerButton, !formData.teacher_id && { opacity: 0.5 }]}
                     onPress={() => {
+                      if (!formData.teacher_id) {
+                        setErrorMessage("Please select a teacher first");
+                        setShowErrorModal(true);
+                        return;
+                      }
                       setTempClassId(formData.class_id);
                       setShowClassPicker(true);
                     }}
+                    disabled={!formData.teacher_id}
                   >
                     <Text style={styles.pickerButtonText}>
                       {formData.class_id
@@ -295,7 +301,7 @@ export default function TeacherAssignments() {
                             const cls = classes.find((c) => c._id === formData.class_id);
                             return cls ? `${cls.class_name} - ${cls.school_id.school_name}` : "Select class";
                           })()
-                        : "Select class"}
+                        : formData.teacher_id ? "Select class" : "Select teacher first"}
                     </Text>
                     <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
                   </TouchableOpacity>
@@ -389,14 +395,19 @@ export default function TeacherAssignments() {
                   ]}
                   onPress={() => setTempTeacherId(item._id)}
                 >
-                  <Text
-                    style={[
-                      styles.pickerItemText,
-                      tempTeacherId === item._id && styles.pickerItemTextSelected,
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.pickerItemText,
+                        tempTeacherId === item._id && styles.pickerItemTextSelected,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text style={styles.pickerItemSubtext}>
+                      {item.school_id?.school_name || 'No school'}
+                    </Text>
+                  </View>
                   {tempTeacherId === item._id && (
                     <MaterialIcons name="check-circle" size={24} color="#10B981" />
                   )}
@@ -414,7 +425,11 @@ export default function TeacherAssignments() {
               <TouchableOpacity
                 style={[styles.pickerButton2, styles.pickerOkButton]}
                 onPress={() => {
-                  setFormData({ ...formData, teacher_id: tempTeacherId });
+                  if (tempTeacherId !== formData.teacher_id) {
+                    setFormData({ ...formData, teacher_id: tempTeacherId, class_id: "" });
+                  } else {
+                    setFormData({ ...formData, teacher_id: tempTeacherId });
+                  }
                   setShowTeacherPicker(false);
                 }}
               >
@@ -441,7 +456,16 @@ export default function TeacherAssignments() {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={classes}
+              data={(() => {
+                if (!formData.teacher_id) return [];
+                const selectedTeacher = teachers.find(t => t._id === formData.teacher_id);
+                if (!selectedTeacher) return [];
+                return classes.filter(c =>
+                  typeof c.school_id === 'object'
+                    ? c.school_id._id === selectedTeacher.school_id?._id
+                    : c.school_id === selectedTeacher.school_id?._id
+                );
+              })()}
               keyExtractor={(item) => item._id}
               renderItem={({ item }) => (
                 <TouchableOpacity
