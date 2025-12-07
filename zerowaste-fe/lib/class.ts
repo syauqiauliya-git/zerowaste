@@ -16,7 +16,7 @@ export interface Class {
 }
 
 export async function fetchClasses() {
-  return apiFetch<{ status: string; data: Class[] }>("/api/v1/classes");
+  return apiFetch<{ status: string; results: number; data: { classes: Class[] } }>("/api/v1/classes");
 }
 
 export async function fetchClassDetail(classId: string) {
@@ -55,7 +55,7 @@ export async function deleteClass(classId: string) {
 }
 
 export async function fetchClassesBySchoolId(schoolId: string) {
-  return apiFetch<{ status: boolean; results: number; data: Class[] }>(
+  return apiFetch<{ status: string; results: number; data: { classes: Class[] } }>(
     `/api/v1/classes/school/${schoolId}`
   );
 }
