@@ -14,7 +14,7 @@ export default function Index() {
     hasToken().then(isLoggedIn => {
       console.log('Is user logged in?', isLoggedIn);
       if (isLoggedIn) {
-        router.replace('/(tabs)/home')
+        router.replace('/(tabs)/analytics')
       }
     })
   }, [])

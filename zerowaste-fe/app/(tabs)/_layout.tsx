@@ -7,7 +7,6 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image, TouchableOpacity, View } from "react-native";
 
 import { useAppSelector } from "@/store/hooks";
@@ -67,20 +66,11 @@ export default function TabLayout() {
     >
       {/* Common tabs for all roles */}
       <Tabs.Screen
-        name="home"
+        name="analytics"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: "Analytics",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="bar-chart-outline" size={24} color={color} />
           ),
         }}
       />

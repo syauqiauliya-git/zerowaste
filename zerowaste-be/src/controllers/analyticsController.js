@@ -32,7 +32,7 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
     },
     { $unwind: '$class_data' },
     {
-      $match: { 'class_data.school': new mongoose.Types.ObjectId(school_id) }
+      $match: { 'class_data.school_id': new mongoose.Types.ObjectId(school_id) }
     },
     {
       $group: {
@@ -66,12 +66,49 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
     },
     { $unwind: '$class_data' },
     {
-      $match: { 'class_data.school': new mongoose.Types.ObjectId(school_id) }
+      $match: { 'class_data.school_id': new mongoose.Types.ObjectId(school_id) }
     },
     {
       $group: { _id: '$report_date', totalWaste: { $sum: '$total_waste_kg' } }
     },
     { $sort: { _id: 1 } }
+  ]);
+
+  // Get top waste reasons
+  const topReasonsData = await DailyReport.aggregate([
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'class_data'
+      }
+    },
+    { $unwind: '$class_data' },
+    {
+      $match: { 'class_data.school_id': new mongoose.Types.ObjectId(school_id) }
+    },
+    {
+      $project: {
+        reason_breakdown_json: { $objectToArray: '$reason_breakdown_json' }
+      }
+    },
+    { $unwind: '$reason_breakdown_json' },
+    {
+      $group: {
+        _id: '$reason_breakdown_json.k',
+        count: { $sum: '$reason_breakdown_json.v' }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+    {
+      $project: {
+        _id: 0,
+        code: '$_id',
+        count: 1
+      }
+    }
   ]);
 
   res.status(200).json({
@@ -80,7 +117,10 @@ export const getSchoolAnalytics = catchAsync(async (req, res, next) => {
       totalReduction: data.totalReduction,
       averageRating,
       totalReports: data.totalReports,
-      trend
+      totalLikes: data.totalLikes,
+      totalDislikes: data.totalDislikes,
+      trend,
+      topReasons: topReasonsData
     }
   });
 });
@@ -102,7 +142,7 @@ export const getSchoolAnalyticsById = catchAsync(async (req, res, next) => {
     },
     { $unwind: '$class_data' },
     {
-      $match: { 'class_data.school': new mongoose.Types.ObjectId(id) }
+      $match: { 'class_data.school_id': new mongoose.Types.ObjectId(id) }
     },
     {
       $group: {
@@ -235,7 +275,7 @@ export const getClassAnalytics = catchAsync(async (req, res, next) => {
     },
     { $unwind: '$class_data' },
     {
-      $match: { 'class_data.school': new mongoose.Types.ObjectId(school_id) }
+      $match: { 'class_data.school_id': new mongoose.Types.ObjectId(school_id) }
     },
     {
       $group: {
@@ -246,7 +286,28 @@ export const getClassAnalytics = catchAsync(async (req, res, next) => {
     }
   ]);
 
-  res.status(200).json({ status: 'success', results: classes.length, data: classes });
+  // Get trend data for each class
+  const classesWithTrend = await Promise.all(
+    classes.map(async (classItem) => {
+      const trend = await DailyReport.aggregate([
+        { $match: { class: classItem._id } },
+        {
+          $group: {
+            _id: '$report_date',
+            totalWaste: { $sum: '$total_waste_kg' }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      return {
+        ...classItem,
+        trend
+      };
+    })
+  );
+
+  res.status(200).json({ status: 'success', results: classesWithTrend.length, data: classesWithTrend });
 });
 
 export const getClassAnalyticsById = catchAsync(async (req, res, next) => {

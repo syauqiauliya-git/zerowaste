@@ -39,8 +39,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignUp }) => {
       const response = await loginApi({ email: email.trim(), password });
       await saveToken(response.token, response.role, response.sppg_id)
       // Fetch role immediately after login to update Redux store
-      dispatch(fetchRole() as any)
-      router.replace("/(tabs)/home");
+      await dispatch(fetchRole() as any)
+      router.replace("/(tabs)/analytics");
     } catch (e: any) {
       setError(e?.message || "Login failed");
     } finally {
