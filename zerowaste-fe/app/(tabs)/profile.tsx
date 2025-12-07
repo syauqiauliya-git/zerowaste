@@ -8,6 +8,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { clearRole } from '@/store/slices/authSlice';
 import { removeToken } from '@/lib/auth-storage';
 import { useRouter } from 'expo-router';
+import { getMyTeacherAssignments, TeacherClassAssignment } from '@/lib/assignments';
 
 export default function ProfileScreen() {
   const [loading, setLoading] = useState(true)
@@ -16,6 +17,7 @@ export default function ProfileScreen() {
   const [profileInfo, setProfileInfo] = useState<any>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({ username: '', number: '', name: '' })
+  const [classAssignments, setClassAssignments] = useState<TeacherClassAssignment[]>([])
   const dispatch = useAppDispatch()
   const router = useRouter()
 
@@ -33,6 +35,18 @@ export default function ProfileScreen() {
           number: (res.data.user_info as any).number ?? '',
           name: res.data.profile_info?.name ?? '',
         })
+
+        if (res.data.user_info.role === 'teacher') {
+          try {
+            const assignmentsRes = await getMyTeacherAssignments()
+            const myAssignments = assignmentsRes.data.assignments.filter(
+              (a: TeacherClassAssignment) => a.teacher_id._id === (res.data.user_info as any).teacher_id && a.is_active
+            )
+            setClassAssignments(myAssignments)
+          } catch (err) {
+            console.error('Failed to load class assignments', err)
+          }
+        }
       } catch (err: any) {
         console.error('Failed to load profile', err)
         Alert.alert('Error', err.message || 'Failed to load profile')
@@ -59,6 +73,9 @@ export default function ProfileScreen() {
 
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.sppgName}>{profileInfo?.name || userInfo?.username || ''}</Text>
+            {userInfo?.role === 'teacher' && (
+              <Text style={styles.sppgPosition}>Guru Kelas {classAssignments.map(a => `${a.class_id.grade_level} - ${a.class_id.class_name}`).join(', ')}</Text>
+            )}
           </View>
         </View>
 
@@ -95,14 +112,36 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            <View style={styles.infoRowLast}>
+            <View style={userInfo?.role === 'teacher' || userInfo?.role === 'sppg_staff' ? styles.infoRow : styles.infoRowLast}>
               <View style={styles.infoIcon}><MaterialIcons name="mail" size={18} color="#10B981" /></View>
               <View style={styles.infoBody}>
                 <Text style={styles.infoLabel}>Email</Text>
                 <Text style={styles.infoValue}>{userInfo?.email || ''}</Text>
               </View>
             </View>
+
+            {userInfo?.role === 'teacher' && (
+              <View style={styles.infoRowLast}>
+                <View style={styles.infoIcon}><MaterialIcons name="school" size={18} color="#10B981" /></View>
+                <View style={styles.infoBody}>
+                  <Text style={styles.infoLabel}>Sekolah</Text>
+                  <Text style={styles.infoValue}>{profileInfo?.school_id?.school_name || '-'}</Text>
+                </View>
+              </View>
+            )}
+
+            {userInfo?.role === 'sppg_staff' && (
+              <View style={styles.infoRowLast}>
+                <View style={styles.infoIcon}><MaterialIcons name="business" size={18} color="#10B981" /></View>
+                <View style={styles.infoBody}>
+                  <Text style={styles.infoLabel}>SPPG</Text>
+                  <Text style={styles.infoValue}>{profileInfo?.sppg_id?.name || '-'}</Text>
+                </View>
+              </View>
+            )}
           </View>
+
+
 
           {isEditing && (
             <Pressable style={[styles.button, saving && styles.buttonDisabled]} onPress={async () => {

@@ -4,7 +4,10 @@ import { protect, restrictTo } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Apply security middleware to the entire router: Must be authenticated AND an Admin
+// Teacher-specific endpoint (accessible by teachers)
+router.get('/my-assignments', protect, restrictTo('teacher'), assignmentController.getMyTeacherAssignments);
+
+// Apply security middleware to admin routes: Must be authenticated AND an Admin
 router.use(protect, restrictTo('admin'));
 
 // --- Teacher-Class Assignment Endpoints ---

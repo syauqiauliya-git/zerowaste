@@ -12,6 +12,7 @@ export interface TeacherClassAssignment {
   class_id: {
     _id: string;
     class_name: string;
+    grade_level: number;
     school_id?: {
       _id: string;
       school_name: string;
@@ -210,4 +211,15 @@ export async function deleteSPPGAssignment(id: string) {
     method: "DELETE",
   });
   return response as { status: string };
+}
+
+export async function getMyTeacherAssignments() {
+  const response = await apiFetch("/api/v1/assignments/my-assignments", {
+    method: "GET",
+  });
+  return response as {
+    status: string;
+    results: number;
+    data: { assignments: TeacherClassAssignment[] };
+  };
 }
