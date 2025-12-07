@@ -57,7 +57,7 @@ export default function TeacherAssignments() {
       ]);
       setAssignments(assignmentsRes.data.assignments);
       setTeachers(teachersRes.data.teachers);
-      setClasses(classesRes.data);
+      setClasses(classesRes.data.classes);
     } catch (error) {
       console.error("Failed to load data:", error);
       setErrorMessage("Failed to load assignments data");

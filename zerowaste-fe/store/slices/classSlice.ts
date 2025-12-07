@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { 
-  Class, 
-  fetchClasses as apiFetchClasses, 
+import {
+  Class,
+  fetchClasses as apiFetchClasses,
   fetchClassesBySchoolId as apiFetchClassesBySchoolId,
-  createClass as apiCreateClass, 
-  updateClass as apiUpdateClass, 
-  deleteClass as apiDeleteClass 
+  createClass as apiCreateClass,
+  updateClass as apiUpdateClass,
+  deleteClass as apiDeleteClass
 } from '@/lib/class';
 
 interface ClassState {
@@ -45,7 +45,7 @@ export const fetchClasses = createAsyncThunk(
     const response = await apiFetchClasses();
     console.log("fetchClasses raw response:", response);
     console.log("Testinggg");
-    const mappedData = response.data.map(mapApiClassToSliceClass);
+    const mappedData = response.data.classes.map(mapApiClassToSliceClass);
     console.log("Mapped class data!!!!!!!!!!!!:", mappedData);
     console.log("Testinggg222");
     return mappedData;
@@ -59,10 +59,10 @@ export const fetchClassesBySchoolId = createAsyncThunk(
       console.log("Fetching classes for school ID:", schoolId);
       const response = await apiFetchClassesBySchoolId(schoolId);
       console.log("Classes by school ID raw response:", response);
-      if (!response || !response.data) {
+      if (!response || !response.data || !response.data.classes) {
         throw new Error('Invalid response format from API');
       }
-      const mappedData = response.data.map(mapApiClassToSliceClass);
+      const mappedData = response.data.classes.map(mapApiClassToSliceClass);
       console.log("Mapped class data:", mappedData);
       return mappedData;
     } catch (error) {
@@ -120,7 +120,7 @@ const classSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch classes';
       })
-      
+
       // Fetch classes by school ID
       .addCase(fetchClassesBySchoolId.pending, (state) => {
         state.loading = true;
@@ -134,7 +134,7 @@ const classSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch classes for this school';
       })
-    
+
     // Create class
     .addCase(createClass.pending, (state) => {
       state.loading = true;
