@@ -107,7 +107,7 @@ export default function ProfileScreen() {
                 {isEditing ? (
                   <TextInput value={formData.number} onChangeText={(v) => setFormData({ ...formData, number: v })} style={styles.infoInput} keyboardType="phone-pad" />
                 ) : (
-                  <Text style={styles.infoValue}>{userInfo?.number || ''}</Text>
+                  <Text style={styles.infoValue}>{userInfo?.number || '-'}</Text>
                 )}
               </View>
             </View>
