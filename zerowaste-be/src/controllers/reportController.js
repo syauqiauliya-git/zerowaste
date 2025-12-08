@@ -114,6 +114,13 @@ export const getAllReports = catchAsync(async (req, res, next) => {
   if (req.query.class_id) filters.class = req.query.class_id;
   if (req.query.menu_id) filters.menu = req.query.menu_id;
 
+  if (req.user.role === 'sppg_staff' && req.user.sppg_id) {
+    const sppgMenus = await DailyMenu.find({ sppg: req.user.sppg_id }).select('_id');
+    const menuIds = sppgMenus.map(menu => menu._id);
+
+    filters.menu = { $in: menuIds };
+  }
+
   const reports = await DailyReport.find(filters)
     .populate({
       path: 'teacher',
