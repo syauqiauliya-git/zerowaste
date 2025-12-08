@@ -2,7 +2,7 @@ import { Text, StyleSheet, View, ScrollView, ActivityIndicator, Pressable } from
 import { useEffect, useState, useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchSchools as fetchSchoolsAction } from "@/store/slices/schoolSlice";
-import { fetchSchoolAnalytics, fetchGlobalAnalytics, fetchClassAnalytics, SchoolAnalytics, GlobalAnalytics, ClassAnalyticsResponse } from "@/lib/analytics";
+import { fetchSchoolAnalytics, fetchGlobalAnalytics, fetchClassAnalytics, fetchSppgAnalytics, SchoolAnalytics, GlobalAnalytics, ClassAnalyticsResponse, SPPGAnalytics } from "@/lib/analytics";
 import { School } from "@/lib/school";
 import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -22,6 +22,7 @@ export default function AnalyticsScreen() {
   const [schoolAnalytics, setSchoolAnalytics] = useState<SchoolAnalytics | null>(null);
   const [globalAnalytics, setGlobalAnalytics] = useState<GlobalAnalytics | null>(null);
   const [classAnalytics, setClassAnalytics] = useState<ClassAnalyticsResponse | null>(null);
+  const [sppgAnalytics, setSppgAnalytics] = useState<SPPGAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("Last Week");
@@ -73,6 +74,11 @@ export default function AnalyticsScreen() {
         const globalResponse = await fetchGlobalAnalytics();
         setGlobalAnalytics(globalResponse.data);
       }
+
+      if (role === "sppg_staff") {
+        const sppgResponse = await fetchSppgAnalytics();
+        setSppgAnalytics(sppgResponse.data);
+      }
     } catch (err: any) {
       console.error("Failed to fetch analytics:", err);
       setError(err.message || "Failed to load analytics");
@@ -85,7 +91,7 @@ export default function AnalyticsScreen() {
   useEffect(() => {
     if (role === "admin") {
       dispatch(fetchSchoolsAction());
-    } else if (role === "teacher") {
+    } else if (role === "teacher" || role === "sppg_staff") {
       loadAnalytics();
     }
   }, [role, dispatch, loadAnalytics]);
@@ -201,31 +207,177 @@ export default function AnalyticsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Global Analytics</Text>
 
-          <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, styles.statCardPrimary]}>
+              <Text style={styles.statNumber}>
                 {globalAnalytics?.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statLabel}>kg</Text>
-              <Text style={styles.statSubLabel}>Total Reduction</Text>
+              <Text style={styles.statCardLabel}>kg</Text>
+              <Text style={styles.statCardSub}>Total Reduction</Text>
             </View>
 
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>
+            <View style={[styles.statCard, styles.statCardAccent]}>
+              <Text style={styles.statNumber}>
                 {globalAnalytics?.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statLabel}>/ 5.0</Text>
-              <Text style={styles.statSubLabel}>Avg Rating</Text>
+              <Text style={styles.statCardLabel}>/ 5.0</Text>
+              <Text style={styles.statCardSub}>Avg Rating</Text>
             </View>
 
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>
+            <View style={[styles.statCard, styles.statCardPurple]}>
+              <Text style={styles.statNumber}>
                 {globalAnalytics?.totalReports ?? 0}
               </Text>
-              <Text style={styles.statLabel}>reports</Text>
-              <Text style={styles.statSubLabel}>Total Reports</Text>
+              <Text style={styles.statCardLabel}>reports</Text>
+              <Text style={styles.statCardSub}>Total Reports</Text>
             </View>
           </View>
+        </View>
+      )}
+
+      {role === "sppg_staff" && sppgAnalytics && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>SPPG Analytics</Text>
+
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, styles.statCardPrimary]}>
+              <Text style={styles.statNumber}>
+                {sppgAnalytics.totalReduction?.toFixed(1) ?? "0.0"}
+              </Text>
+              <Text style={styles.statCardLabel}>kg</Text>
+              <Text style={styles.statCardSub}>Total Waste</Text>
+            </View>
+
+            <View style={[styles.statCard, styles.statCardAccent]}>
+              <Text style={styles.statNumber}>
+                {sppgAnalytics.averageRating?.toFixed(1) ?? "0.0"}
+              </Text>
+              <Text style={styles.statCardLabel}>/ 5.0</Text>
+              <Text style={styles.statCardSub}>Avg Rating</Text>
+            </View>
+
+            <View style={[styles.statCard, styles.statCardPurple]}>
+              <Text style={styles.statNumber}>
+                {sppgAnalytics.totalReports ?? 0}
+              </Text>
+              <Text style={styles.statCardLabel}>reports</Text>
+              <Text style={styles.statCardSub}>Total Reports</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, styles.statCardSuccess]}>
+              <View style={styles.statValueRow}>
+                <Ionicons name="thumbs-up" size={28} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.statNumber}>
+                  {sppgAnalytics.totalLikes ?? 0}
+                </Text>
+              </View>
+              <Text style={styles.statCardSub}>Total Likes</Text>
+            </View>
+
+            <View style={[styles.statCard, styles.statCardDanger]}>
+              <View style={styles.statValueRow}>
+                <Ionicons name="thumbs-down" size={28} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.statNumber}>
+                  {sppgAnalytics.totalDislikes ?? 0}
+                </Text>
+              </View>
+              <Text style={styles.statCardSub}>Total Dislikes</Text>
+            </View>
+          </View>
+}
+          <View style={styles.trendSection}>
+            <Text style={styles.trendTitle}>Active Schools: {sppgAnalytics.totalActiveSchools}</Text>
+          </View>
+
+          {sppgAnalytics.trend && sppgAnalytics.trend.length > 0 && (
+            <View style={styles.trendSection}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.trendTitle}>Food Waste Trend by Date</Text>
+
+                <View style={styles.dropdownWrapper}>
+                  <Pressable
+                    style={styles.dropdownButton}
+                    onPress={() => setIsTimeDropdownOpen(!isTimeDropdownOpen)}
+                  >
+                    <Text style={styles.dropdownButtonText}>{selectedTimePeriod}</Text>
+                    <Text style={[styles.dropdownIcon, isTimeDropdownOpen && styles.dropdownIconOpen]}>▼</Text>
+                  </Pressable>
+
+                  {isTimeDropdownOpen && (
+                    <View style={styles.dropdownMenu}>
+                      {["Last Week", "Last Month", "Last Year"].map((period, index) => (
+                        <Pressable
+                          key={`period-${period}`}
+                          style={[
+                            styles.dropdownItem,
+                            selectedTimePeriod === period && styles.dropdownItemActive,
+                            index === 2 && styles.dropdownItemLast
+                          ]}
+                          onPress={() => {
+                            setSelectedTimePeriod(period);
+                            setIsTimeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.dropdownItemText,
+                            selectedTimePeriod === period && styles.dropdownItemTextActive
+                          ]}>
+                            {period}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.chartContainer}>
+                <BarChart
+                  data={(() => {
+                    const now = new Date();
+                    let filteredData = sppgAnalytics.trend;
+
+                    if (selectedTimePeriod === "Last Week") {
+                      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                      filteredData = sppgAnalytics.trend.filter(
+                        item => new Date(item._id) >= weekAgo
+                      );
+                    } else if (selectedTimePeriod === "Last Month") {
+                      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                      filteredData = sppgAnalytics.trend.filter(
+                        item => new Date(item._id) >= monthAgo
+                      );
+                    } else if (selectedTimePeriod === "Last Year") {
+                      const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                      filteredData = sppgAnalytics.trend.filter(
+                        item => new Date(item._id) >= yearAgo
+                      );
+                    }
+
+                    return filteredData;
+                  })()}
+                  height={220}
+                />
+              </View>
+            </View>
+          )}
+
+          {sppgAnalytics.schools && sppgAnalytics.schools.length > 0 && (
+            <View style={styles.trendSection}>
+              <Text style={styles.trendTitle}>Schools Performance</Text>
+              {sppgAnalytics.schools.map((school, index) => (
+                <View key={index} style={styles.classRow}>
+                  <Text style={styles.className}>{school.school_name}</Text>
+                  <View style={styles.classStats}>
+                    <Text style={styles.classWaste}>{school.totalWaste.toFixed(1)} kg</Text>
+                    <Text style={styles.classReports}>({school.totalReports} reports)</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 

@@ -373,10 +373,113 @@ export const getSppgAnalytics = catchAsync(async (req, res, next) => {
     }
   ]);
 
+  const schoolIds = assignments.map(a => a.school_id);
+  const reports = await DailyReport.aggregate([
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'class_data'
+      }
+    },
+    { $unwind: '$class_data' },
+    {
+      $match: {
+        'class_data.school_id': { $in: schoolIds }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalReduction: { $sum: '$total_waste_kg' },
+        totalLikes: { $sum: '$total_likes' },
+        totalDislikes: { $sum: '$total_dislikes' },
+        totalReports: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const data = reports[0] || {
+    totalReduction: 0,
+    totalLikes: 0,
+    totalDislikes: 0,
+    totalReports: 0
+  };
+
+  const averageRating = calcAverageRating(data.totalLikes, data.totalDislikes);
+
+  // Get trend data
+  const trend = await DailyReport.aggregate([
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'class_data'
+      }
+    },
+    { $unwind: '$class_data' },
+    {
+      $match: {
+        'class_data.school_id': { $in: schoolIds }
+      }
+    },
+    {
+      $group: { _id: '$report_date', totalWaste: { $sum: '$total_waste_kg' } }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  const schoolAnalytics = await Promise.all(
+    assignments.map(async (assignment) => {
+      const schoolReports = await DailyReport.aggregate([
+        {
+          $lookup: {
+            from: 'classes',
+            localField: 'class',
+            foreignField: '_id',
+            as: 'class_data'
+          }
+        },
+        { $unwind: '$class_data' },
+        {
+          $match: {
+            'class_data.school_id': assignment.school_id
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalWaste: { $sum: '$total_waste_kg' },
+            totalReports: { $sum: 1 }
+          }
+        }
+      ]);
+
+      const schoolData = schoolReports[0] || { totalWaste: 0, totalReports: 0 };
+
+      return {
+        school_id: assignment.school_id,
+        school_name: assignment.school_name,
+        totalWaste: schoolData.totalWaste,
+        totalReports: schoolData.totalReports
+      };
+    })
+  );
+
   res.status(200).json({
     status: 'success',
-    totalActiveSchools: assignments.length,
-    data: assignments
+    data: {
+      totalReduction: data.totalReduction,
+      averageRating,
+      totalReports: data.totalReports,
+      totalLikes: data.totalLikes,
+      totalDislikes: data.totalDislikes,
+      totalActiveSchools: assignments.length,
+      trend,
+      schools: schoolAnalytics
+    }
   });
 });
 

@@ -22,6 +22,25 @@ export interface GlobalAnalytics {
   totalReports: number;
 }
 
+export interface SPPGAnalytics {
+  totalReduction: number;
+  averageRating: number;
+  totalReports: number;
+  totalLikes: number;
+  totalDislikes: number;
+  totalActiveSchools: number;
+  trend: {
+    _id: string;
+    totalWaste: number;
+  }[];
+  schools: {
+    school_id: string;
+    school_name: string;
+    totalWaste: number;
+    totalReports: number;
+  }[];
+}
+
 export interface ClassAnalyticsEntry {
   _id: string;
   className: string;
@@ -51,6 +70,10 @@ export async function fetchGlobalAnalytics() {
 
 export async function fetchClassAnalytics() {
   return apiFetch<ClassAnalyticsResponse>("/api/v1/analytics/class");
+}
+
+export async function fetchSppgAnalytics() {
+  return apiFetch<{ status: string; data: SPPGAnalytics }>("/api/v1/analytics/sppg");
 }
 
 export interface LeaderboardEntry {
