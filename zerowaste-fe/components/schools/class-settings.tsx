@@ -109,6 +109,24 @@ export default function ClassSettings({
 
   return (
     <View style={styles.content}>
+      {/* School Filter Dropdown */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={styles.schoolPickerButton}
+          onPress={() => {
+            setTempSchoolId(selectedSchoolId);
+            setShowSchoolPicker(true);
+          }}
+        >
+          <Text style={styles.schoolPickerButtonText}>
+            {selectedSchoolId === "all"
+              ? "All Schools"
+              : schools.find((s) => s._id === selectedSchoolId)?.school_name || "Select School"}
+          </Text>
+          <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.searchBarContainer}>
         <View style={styles.searchBar}>
           <MaterialIcons name="search" size={20} color="#6b7280" />
@@ -125,25 +143,6 @@ export default function ClassSettings({
             </Pressable>
           )}
         </View>
-      </View>
-
-      {/* School Filter Dropdown */}
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Filter by School:</Text>
-        <TouchableOpacity
-          style={styles.schoolPickerButton}
-          onPress={() => {
-            setTempSchoolId(selectedSchoolId);
-            setShowSchoolPicker(true);
-          }}
-        >
-          <Text style={styles.schoolPickerButtonText}>
-            {selectedSchoolId === "all"
-              ? "All Schools"
-              : schools.find((s) => s._id === selectedSchoolId)?.school_name || "Select School"}
-          </Text>
-          <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView

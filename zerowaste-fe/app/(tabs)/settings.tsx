@@ -62,6 +62,7 @@ export default function SettingsScreen() {
   } | null>(null);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const tabScrollViewRef = useRef<ScrollView>(null);
+  const [scrollX, setScrollX] = useState(0);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -148,7 +149,8 @@ export default function SettingsScreen() {
         <TouchableOpacity
           style={styles.scrollArrowLeft}
           onPress={() => {
-            tabScrollViewRef.current?.scrollTo({ x: -150, y: 0, animated: true });
+            const newX = Math.max(0, scrollX - 150);
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
           }}
         >
           <MaterialIcons name="chevron-left" size={24} color="#6b7280" />
@@ -159,6 +161,10 @@ export default function SettingsScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabContainer}
           style={styles.tabScrollContent}
+          onScroll={(event) => {
+            setScrollX(event.nativeEvent.contentOffset.x);
+          }}
+          scrollEventThrottle={16}
         >
           <Pressable
             style={[styles.tab, activeTab === "school" && styles.activeTab]}
@@ -242,7 +248,8 @@ export default function SettingsScreen() {
         <TouchableOpacity
           style={styles.scrollArrowRight}
           onPress={() => {
-            tabScrollViewRef.current?.scrollTo({ x: 150, y: 0, animated: true });
+            const newX = scrollX + 150;
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
           }}
         >
           <MaterialIcons name="chevron-right" size={24} color="#6b7280" />
