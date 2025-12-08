@@ -45,7 +45,7 @@ export default function FeedbackScreen() {
     const checkRole = async () => {
       const userRole = await getRole();
       if (userRole?.toLowerCase() !== "teacher") {
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)/analytics");
       }
     };
     checkRole();
