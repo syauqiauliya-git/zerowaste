@@ -4,10 +4,12 @@ import { useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createSchool } from '@/store/slices/schoolSlice';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function SchoolCreateScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const { loading } = useAppSelector((state) => state.schools);
   const [schoolName, setSchoolName] = useState("");
   const [studentCount, setStudentCount] = useState("");
@@ -18,7 +20,7 @@ export default function SchoolCreateScreen() {
     const name = schoolName.trim();
     const addr = address.trim();
     if (name.length === 0 || addr.length === 0) {
-      alert("Please fill in all required fields.");
+      alert(t("school.fillAllRequired"));
       return;
     }
     
@@ -37,7 +39,7 @@ export default function SchoolCreateScreen() {
       router.back();
     } catch (error: any) {
       console.error('Failed to create school:', error);
-      alert(error.message || "Something went wrong!");
+      alert(error.message || t("common.error"));
     }
   };
 
@@ -52,48 +54,48 @@ export default function SchoolCreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Header title="Create School" icon="school" />
+        <Header title={t("school.createSchool")} icon="school" />
 
         <View style={styles.container}>
           <View style={styles.formControl}>
-            <Text style={styles.label}>School Name</Text>
+            <Text style={styles.label}>{t("school.schoolName")}</Text>
             <TextInput
               style={styles.inputContainer}
               value={schoolName}
               onChangeText={setSchoolName}
-              placeholder="Enter school name"
+              placeholder={t("school.enterSchoolName")}
             />
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Number of Students</Text>
+            <Text style={styles.label}>{t("school.numberOfStudents")}</Text>
             <TextInput
               style={styles.inputContainer}
               value={studentCount}
               onChangeText={setStudentCount}
-              placeholder="Enter number of students"
+              placeholder={t("school.enterStudentCount")}
               keyboardType="numeric"
             />
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Number of Classes</Text>
+            <Text style={styles.label}>{t("school.numberOfClasses")}</Text>
             <TextInput
               style={styles.inputContainer}
               value={classCount}
               onChangeText={setClassCount}
-              placeholder="Enter number of classes"
+              placeholder={t("school.enterClassCount")}
               keyboardType="numeric"
             />
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Address</Text>
+            <Text style={styles.label}>{t("school.address")}</Text>
             <TextInput
               style={[styles.inputContainer, styles.textArea]}
               value={address}
               onChangeText={setAddress}
-              placeholder="Enter school address"
+              placeholder={t("school.enterAddress")}
               multiline
               numberOfLines={3}
             />
@@ -104,7 +106,7 @@ export default function SchoolCreateScreen() {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create'}</Text>
+            <Text style={styles.buttonText}>{loading ? t("school.creating") : t("school.create")}</Text>
           </Pressable>
         </View>
       </ScrollView>

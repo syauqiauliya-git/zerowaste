@@ -10,20 +10,23 @@ import {
 } from "react-native";
 import Header from "@/components/ui/header";
 import { DailyMenu, getMenu } from "@/lib/menus";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const isNil = (v: unknown) => v === undefined || v === null;
 
 const MenuCard = ({
   data,
+  t,
 }: {
   data: DailyMenu;
+  t: (path: string) => string;
 }) => (
-  <View style={styles.card}>
+    <View style={styles.card}>
     <Text style={styles.title}>{data.nama_menu}</Text>
     {data.deskripsi ? <Text style={styles.desc}>{data.deskripsi}</Text> : null}
 
     <View style={styles.row}>
-      <Text style={styles.label}>Sekolah</Text>
+      <Text style={styles.label}>{t("food.school")}</Text>
       <Text style={styles.value}>
         {typeof data.school === "object"
           ? data.school?.school_name
@@ -31,7 +34,7 @@ const MenuCard = ({
       </Text>
     </View>
     <View style={styles.row}>
-      <Text style={styles.label}>SPPG</Text>
+      <Text style={styles.label}>{t("food.sppg")}</Text>
       <Text style={styles.value}>
         {typeof data.sppg === "object" ? data.sppg?.name : data.sppg || "-"}
       </Text>
@@ -41,25 +44,25 @@ const MenuCard = ({
 
     <View style={styles.grid}>
       <View style={styles.gridItem}>
-        <Text style={styles.miniLabel}>Harga</Text>
+        <Text style={styles.miniLabel}>{t("food.price")}</Text>
         <Text style={styles.miniValue}>
           {isNil(data.harga) ? "-" : `Rp${data.harga}`}
         </Text>
       </View>
       <View style={styles.gridItem}>
-        <Text style={styles.miniLabel}>Protein</Text>
+        <Text style={styles.miniLabel}>{t("food.protein")}</Text>
         <Text style={styles.miniValue}>
           {isNil(data.protein) ? "-" : `${data.protein} g`}
         </Text>
       </View>
       <View style={styles.gridItem}>
-        <Text style={styles.miniLabel}>Lemak</Text>
+        <Text style={styles.miniLabel}>{t("food.fat")}</Text>
         <Text style={styles.miniValue}>
           {isNil(data.lemak) ? "-" : `${data.lemak} g`}
         </Text>
       </View>
       <View style={styles.gridItem}>
-        <Text style={styles.miniLabel}>Karbohidrat</Text>
+        <Text style={styles.miniLabel}>{t("food.carbohydrate")}</Text>
         <Text style={styles.miniValue}>
           {isNil(data.karbohidrat) ? "-" : `${data.karbohidrat} g`}
         </Text>
@@ -70,6 +73,7 @@ const MenuCard = ({
 
 export default function FoodDetailScreen() {
   const { menuId } = useLocalSearchParams<{ menuId: string }>();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [menu, setMenu] = useState<DailyMenu | null>(null);
 
@@ -81,7 +85,7 @@ export default function FoodDetailScreen() {
       setMenu(res.data.menu);
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Gagal memuat detail menu");
+      Alert.alert(t("common.error"), t("food.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -104,18 +108,19 @@ export default function FoodDetailScreen() {
       return (
         <MenuCard
           data={menu}
+          t={t}
         />
       );
     return (
       <Text style={{ textAlign: "center", marginTop: 24, color: "#666" }}>
-        Data tidak ditemukan
+        {t("food.dataNotFound")}
       </Text>
     );
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Header title="Menu Detail" icon="restaurant" />
+      <Header title={t("food.menuDetail")} icon="restaurant" />
       {renderBody()}
     </ScrollView>
   );

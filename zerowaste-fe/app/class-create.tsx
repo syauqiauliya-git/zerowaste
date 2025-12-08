@@ -4,11 +4,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createClass } from "@/store/slices/classSlice";
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ClassCreateScreen() {
   const { schoolId } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const { loading } = useAppSelector((state) => state.classes);
   const [className, setClassName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
@@ -17,7 +19,7 @@ export default function ClassCreateScreen() {
     const name = className.trim();
     const grade = gradeLevel.trim();
     if (name.length === 0 || grade.length === 0) {
-      alert("Please fill in all required fields.");
+      alert(t("class.fillAllRequired"));
       return;
     }
     
@@ -35,7 +37,7 @@ export default function ClassCreateScreen() {
       router.back();
     } catch (error: any) {
       console.error('Failed to create class:', error);
-      alert(error.message || "Something went wrong!");
+      alert(error.message || t("common.error"));
     }
   };
 
@@ -50,26 +52,26 @@ export default function ClassCreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Header title="Create Class" icon="group" />
+        <Header title={t("class.createClass")} icon="group" />
 
         <View style={styles.container}>
           <View style={styles.formControl}>
-            <Text style={styles.label}>Class Name</Text>
+            <Text style={styles.label}>{t("class.className")}</Text>
             <TextInput
               style={styles.inputContainer}
               value={className}
               onChangeText={setClassName}
-              placeholder="Enter class name"
+              placeholder={t("class.enterClassName")}
             />
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Grade Level</Text>
+            <Text style={styles.label}>{t("class.gradeLevel")}</Text>
             <TextInput
               style={styles.inputContainer}
               value={gradeLevel}
               onChangeText={setGradeLevel}
-              placeholder="Enter grade level"
+              placeholder={t("class.enterGradeLevel")}
               keyboardType="numeric"
             />
           </View>
@@ -79,7 +81,7 @@ export default function ClassCreateScreen() {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create'}</Text>
+            <Text style={styles.buttonText}>{loading ? t("class.creating") : t("class.create")}</Text>
           </Pressable>
         </View>
       </ScrollView>

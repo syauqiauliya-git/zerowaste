@@ -35,6 +35,7 @@ import ClassSettings from '@/components/schools/class-settings';
 import SPPGSettings from '@/components/sppg/sppg-settings';
 import TeacherAssignments from '@/components/assignments/teacher-assignments';
 import SPPGAssignments from '@/components/assignments/sppg-assignments';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type CombinedPending = {
   _id: string;
@@ -49,6 +50,7 @@ export default function SettingsScreen() {
   const { schools, loading: schoolsLoading } = useAppSelector((state) => state.schools);
   const { classes, loading: classesLoading } = useAppSelector((state) => state.classes);
   const { sppgList, loading: sppgLoading } = useAppSelector((state) => state.sppg);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"school" | "class" | "sppg" | "user" | "teacher-assignment" | "sppg-assignment">(
     "school"
   );
@@ -62,6 +64,7 @@ export default function SettingsScreen() {
   } | null>(null);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const tabScrollViewRef = useRef<ScrollView>(null);
+  const [scrollX, setScrollX] = useState(0);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -82,11 +85,11 @@ export default function SettingsScreen() {
       setPending([...teachers, ...staff]);
     } catch (err) {
       console.error("Failed to load pending profiles", err);
-      Alert.alert("Error", "Failed to load pending profiles");
+      Alert.alert(t("common.error"), t("settings.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const checkRole = async () => {
@@ -142,13 +145,14 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.mainView}>
-      <Header title="Settings" icon="settings" />
+      <Header title={t("settings.title")} icon="settings" />
 
       <View style={styles.tabScrollView}>
         <TouchableOpacity
           style={styles.scrollArrowLeft}
           onPress={() => {
-            tabScrollViewRef.current?.scrollTo({ x: -150, y: 0, animated: true });
+            const newX = Math.max(0, scrollX - 150);
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
           }}
         >
           <MaterialIcons name="chevron-left" size={24} color="#6b7280" />
@@ -159,6 +163,10 @@ export default function SettingsScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabContainer}
           style={styles.tabScrollContent}
+          onScroll={(event) => {
+            setScrollX(event.nativeEvent.contentOffset.x);
+          }}
+          scrollEventThrottle={16}
         >
           <Pressable
             style={[styles.tab, activeTab === "school" && styles.activeTab]}
@@ -170,7 +178,7 @@ export default function SettingsScreen() {
                 activeTab === "school" && styles.activeTabText,
               ]}
             >
-              School
+              {t("settings.school")}
             </Text>
           </Pressable>
           <Pressable
@@ -183,7 +191,7 @@ export default function SettingsScreen() {
                 activeTab === "class" && styles.activeTabText,
               ]}
             >
-              Class
+              {t("settings.class")}
             </Text>
           </Pressable>
           <Pressable
@@ -196,7 +204,7 @@ export default function SettingsScreen() {
                 activeTab === "sppg" && styles.activeTabText,
               ]}
             >
-              SPPG
+              {t("settings.sppg")}
             </Text>
           </Pressable>
           <Pressable
@@ -209,7 +217,7 @@ export default function SettingsScreen() {
                 activeTab === "user" && styles.activeTabText,
               ]}
             >
-              User
+              {t("settings.user")}
             </Text>
           </Pressable>
           <Pressable
@@ -222,7 +230,7 @@ export default function SettingsScreen() {
                 activeTab === "teacher-assignment" && styles.activeTabText,
               ]}
             >
-              Teacher Assignment
+              {t("settings.teacherAssignment")}
             </Text>
           </Pressable>
           <Pressable
@@ -235,14 +243,15 @@ export default function SettingsScreen() {
                 activeTab === "sppg-assignment" && styles.activeTabText,
               ]}
             >
-              SPPG Assignment
+              {t("settings.sppgAssignment")}
             </Text>
           </Pressable>
         </ScrollView>
         <TouchableOpacity
           style={styles.scrollArrowRight}
           onPress={() => {
-            tabScrollViewRef.current?.scrollTo({ x: 150, y: 0, animated: true });
+            const newX = scrollX + 150;
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
           }}
         >
           <MaterialIcons name="chevron-right" size={24} color="#6b7280" />
@@ -280,7 +289,7 @@ export default function SettingsScreen() {
               <MaterialIcons name="search" size={20} color="#6b7280" />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search users..."
+                placeholder={t("settings.searchUsers")}
                 placeholderTextColor="#9ca3af"
                 value={userSearchQuery}
                 onChangeText={setUserSearchQuery}
@@ -336,17 +345,17 @@ export default function SettingsScreen() {
                         loadPending();
                       } catch (e) {
                         console.error(e);
-                        Alert.alert("Error", "Failed to approve profile");
+                        Alert.alert(t("common.error"), t("settings.failedToApprove"));
                       }
                     }}
                     onReject={async () => {
                       try {
                         await rejectProfile(item._id, item.profileType);
-                        Alert.alert("Success", "Profile rejected");
+                        Alert.alert(t("common.success"), t("settings.profileRejected"));
                         loadPending();
                       } catch (e) {
                         console.error(e);
-                        Alert.alert("Error", "Failed to reject profile");
+                        Alert.alert(t("common.error"), t("settings.failedToReject"));
                       }
                     }}
                   />
@@ -389,7 +398,8 @@ type PendingItemProps = Readonly<{
 }>;
 
 function PendingItem({ item, onApprove, onReject }: PendingItemProps) {
-  const roleLabel = item.profileType === "teacher" ? "Teacher" : "SPPG Staff";
+  const { t } = useTranslation();
+  const roleLabel = item.profileType === "teacher" ? t("settings.teacher") : t("settings.sppgStaff");
   return (
     <View style={styles.card}>
       <View style={{ flex: 1 }}>
@@ -416,9 +426,10 @@ function PendingItem({ item, onApprove, onReject }: PendingItemProps) {
 }
 
 function EmptyList() {
+  const { t } = useTranslation();
   return (
     <Text style={{ textAlign: "center", marginTop: 24, color: "#666" }}>
-      No pending profiles
+      {t("settings.noPendingProfiles")}
     </Text>
   );
 }
@@ -436,6 +447,7 @@ function ApproveSuccessModal({
   role,
   onClose,
 }: ApproveSuccessModalProps) {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.9)).current;
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -456,8 +468,8 @@ function ApproveSuccessModal({
   }, [visible, fade, scale]);
 
   let roleLabel = "";
-  if (role === "teacher") roleLabel = "Teacher";
-  else if (role === "sppgstaff") roleLabel = "SPPG Staff";
+  if (role === "teacher") roleLabel = t("settings.teacher");
+  else if (role === "sppgstaff") roleLabel = t("settings.sppgStaff");
 
   return (
     <Modal
@@ -473,7 +485,7 @@ function ApproveSuccessModal({
           <View style={styles.popupIconWrap}>
             <MaterialIcons name="check-circle" size={66} color="#10B981" />
           </View>
-          <Text style={styles.popupTitle}>Approved!</Text>
+          <Text style={styles.popupTitle}>{t("settings.approved")}</Text>
           {!!name && <Text style={styles.popupName}>{name}</Text>}
           {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
         </Animated.View>

@@ -8,11 +8,13 @@ import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import BarChart from "@/components/charts/BarChart";
+import { useTranslation } from "@/hooks/useTranslation";
 // import { dummySchoolAnalytics, dummyGlobalAnalytics } from "@/data/dummy-analytics";
 
 const SELECTED_SCHOOL_KEY = "selected_school_id";
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
@@ -26,10 +28,23 @@ export default function AnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("Last Week");
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("");
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>("");
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+
+  const TIME_PERIODS = [
+    t("analytics.lastWeek"),
+    t("analytics.lastMonth"),
+    t("analytics.lastYear"),
+  ];
+
+  // Initialize selectedTimePeriod with translated value
+  useEffect(() => {
+    if (!selectedTimePeriod) {
+      setSelectedTimePeriod(t("analytics.lastWeek"));
+    }
+  }, [t]);
 
   const loadInitialSchool = useCallback(async () => {
     if (role !== "admin" || selectedSchoolId) return;
@@ -82,11 +97,11 @@ export default function AnalyticsScreen() {
       }
     } catch (err: any) {
       console.error("Failed to fetch analytics:", err);
-      setError(err.message || "Failed to load analytics");
+      setError(err.message || t("analytics.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, [role, selectedSchoolId]);
+  }, [role, selectedSchoolId, t]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -194,7 +209,7 @@ export default function AnalyticsScreen() {
     return (
       <View style={[styles.mainView, styles.centerContent]}>
         <ActivityIndicator size="large" color="#10B981" />
-        <Text style={styles.loadingText}>Loading analytics...</Text>
+        <Text style={styles.loadingText}>{t("analytics.loading")}</Text>
       </View>
     );
   }
@@ -218,31 +233,31 @@ export default function AnalyticsScreen() {
       {/* Global Analytics - for admins only */}
       {role === "admin" && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Global Analytics</Text>
+          <Text style={styles.sectionTitle}>{t("analytics.globalAnalytics")}</Text>
 
           <View style={styles.statsRow}>
             <View style={[styles.statCard, styles.statCardPrimary]}>
               <Text style={styles.statNumber}>
                 {globalAnalytics?.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>kg</Text>
-              <Text style={styles.statCardSub}>Total Reduction</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.kg")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalReduction")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardAccent]}>
               <Text style={styles.statNumber}>
                 {globalAnalytics?.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>/ 5.0</Text>
-              <Text style={styles.statCardSub}>Avg Rating</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.ratingOutOf")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.avgRating")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardPurple]}>
               <Text style={styles.statNumber}>
                 {globalAnalytics?.totalReports ?? 0}
               </Text>
-              <Text style={styles.statCardLabel}>reports</Text>
-              <Text style={styles.statCardSub}>Total Reports</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.reports")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalReports")}</Text>
             </View>
           </View>
         </View>
@@ -250,31 +265,31 @@ export default function AnalyticsScreen() {
 
       {role === "sppg_staff" && sppgAnalytics && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SPPG Analytics</Text>
+          <Text style={styles.sectionTitle}>{t("analytics.sppgAnalytics")}</Text>
 
           <View style={styles.statsRow}>
             <View style={[styles.statCard, styles.statCardPrimary]}>
               <Text style={styles.statNumber}>
                 {sppgAnalytics.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>kg</Text>
-              <Text style={styles.statCardSub}>Total Waste</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.kg")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalWaste")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardAccent]}>
               <Text style={styles.statNumber}>
                 {sppgAnalytics.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>/ 5.0</Text>
-              <Text style={styles.statCardSub}>Avg Rating</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.ratingOutOf")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.avgRating")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardPurple]}>
               <Text style={styles.statNumber}>
                 {sppgAnalytics.totalReports ?? 0}
               </Text>
-              <Text style={styles.statCardLabel}>reports</Text>
-              <Text style={styles.statCardSub}>Total Reports</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.reports")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalReports")}</Text>
             </View>
           </View>
 
@@ -286,7 +301,7 @@ export default function AnalyticsScreen() {
                   {sppgAnalytics.totalLikes ?? 0}
                 </Text>
               </View>
-              <Text style={styles.statCardSub}>Total Likes</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalLikes")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardDanger]}>
@@ -296,18 +311,18 @@ export default function AnalyticsScreen() {
                   {sppgAnalytics.totalDislikes ?? 0}
                 </Text>
               </View>
-              <Text style={styles.statCardSub}>Total Dislikes</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalDislikes")}</Text>
             </View>
           </View>
 
           <View style={styles.trendSection}>
-            <Text style={styles.trendTitle}>Active Schools: {sppgAnalytics.totalActiveSchools}</Text>
+            <Text style={styles.trendTitle}>{t("analytics.activeSchools")}: {sppgAnalytics.totalActiveSchools}</Text>
           </View>
 
           {sppgAnalytics.trend && sppgAnalytics.trend.length > 0 && (
             <View style={styles.trendSection}>
               <View style={styles.cardHeader}>
-                <Text style={styles.trendTitle}>Food Waste Trend by Date</Text>
+                <Text style={styles.trendTitle}>{t("analytics.foodWasteTrendByDate")}</Text>
 
                 <View style={styles.dropdownWrapper}>
                   <Pressable
@@ -352,17 +367,17 @@ export default function AnalyticsScreen() {
                     const now = new Date();
                     let filteredData = sppgAnalytics.trend;
 
-                    if (selectedTimePeriod === "Last Week") {
+                    if (selectedTimePeriod === t("analytics.lastWeek")) {
                       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
                       filteredData = sppgAnalytics.trend.filter(
                         item => new Date(item._id) >= weekAgo
                       );
-                    } else if (selectedTimePeriod === "Last Month") {
+                    } else if (selectedTimePeriod === t("analytics.lastMonth")) {
                       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                       filteredData = sppgAnalytics.trend.filter(
                         item => new Date(item._id) >= monthAgo
                       );
-                    } else if (selectedTimePeriod === "Last Year") {
+                    } else if (selectedTimePeriod === t("analytics.lastYear")) {
                       const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
                       filteredData = sppgAnalytics.trend.filter(
                         item => new Date(item._id) >= yearAgo
@@ -379,13 +394,13 @@ export default function AnalyticsScreen() {
 
           {sppgAnalytics.schools && sppgAnalytics.schools.length > 0 && (
             <View style={styles.trendSection}>
-              <Text style={styles.trendTitle}>Schools Performance</Text>
+              <Text style={styles.trendTitle}>{t("analytics.schoolsPerformance")}</Text>
               {sppgAnalytics.schools.map((school, index) => (
                 <View key={index} style={styles.classRow}>
                   <Text style={styles.className}>{school.school_name}</Text>
                   <View style={styles.classStats}>
-                    <Text style={styles.classWaste}>{school.totalWaste.toFixed(1)} kg</Text>
-                    <Text style={styles.classReports}>({school.totalReports} reports)</Text>
+                    <Text style={styles.classWaste}>{school.totalWaste.toFixed(1)} {t("analytics.kg")}</Text>
+                    <Text style={styles.classReports}>({school.totalReports} {t("analytics.reports")})</Text>
                   </View>
                 </View>
               ))}
@@ -399,17 +414,17 @@ export default function AnalyticsScreen() {
         <View style={styles.section}>
           {role === "admin" && (
             <View style={styles.selectSchoolContainer}>
-              <Text style={styles.sectionTitle}>School Analytics</Text>
+              <Text style={styles.sectionTitle}>{t("analytics.schoolAnalytics")}</Text>
               <Pressable
                 style={styles.selectButton}
                 onPress={handleSelectSchool}
               >
                 <Text style={[styles.selectText, !selectedSchool && styles.selectPlaceholder]}>
                   {schools.length === 0
-                    ? "No school selected"
+                    ? t("analytics.noSchoolSelected")
                     : selectedSchool
                       ? selectedSchool.school_name
-                      : "Select a school"}
+                      : t("analytics.selectSchool")}
                 </Text>
                 <Ionicons
                   name="chevron-forward"
@@ -421,7 +436,7 @@ export default function AnalyticsScreen() {
           )}
 
           {role === "teacher" && (
-            <Text style={styles.sectionTitle}>School Analytics</Text>
+            <Text style={styles.sectionTitle}>{t("analytics.schoolAnalytics")}</Text>
           )}
 
           <View style={styles.statsRow}>
@@ -429,24 +444,24 @@ export default function AnalyticsScreen() {
               <Text style={styles.statNumber}>
                 {schoolAnalytics?.totalReduction?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>kg</Text>
-              <Text style={styles.statCardSub}>Total Waste</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.kg")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalWaste")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardAccent]}>
               <Text style={styles.statNumber}>
                 {schoolAnalytics?.averageRating?.toFixed(1) ?? "0.0"}
               </Text>
-              <Text style={styles.statCardLabel}>/ 5.0</Text>
-              <Text style={styles.statCardSub}>Avg Rating</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.ratingOutOf")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.avgRating")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardPurple]}>
               <Text style={styles.statNumber}>
                 {schoolAnalytics?.totalReports ?? 0}
               </Text>
-              <Text style={styles.statCardLabel}>reports</Text>
-              <Text style={styles.statCardSub}>Total Reports</Text>
+              <Text style={styles.statCardLabel}>{t("analytics.reports")}</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalReports")}</Text>
             </View>
           </View>
 
@@ -459,7 +474,7 @@ export default function AnalyticsScreen() {
                   {schoolAnalytics?.totalLikes ?? 0}
                 </Text>
               </View>
-              <Text style={styles.statCardSub}>Total Likes</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalLikes")}</Text>
             </View>
 
             <View style={[styles.statCard, styles.statCardDanger]}>
@@ -469,7 +484,7 @@ export default function AnalyticsScreen() {
                   {schoolAnalytics?.totalDislikes ?? 0}
                 </Text>
               </View>
-              <Text style={styles.statCardSub}>Total Dislikes</Text>
+              <Text style={styles.statCardSub}>{t("analytics.totalDislikes")}</Text>
             </View>
           </View>
 
@@ -478,7 +493,7 @@ export default function AnalyticsScreen() {
             <View style={styles.trendSection}>
               {/* Header with Dropdown */}
               <View style={styles.cardHeader}>
-                <Text style={styles.trendTitle}>Food Waste Trend by Date</Text>
+                <Text style={styles.trendTitle}>{t("analytics.foodWasteTrendByDate")}</Text>
 
                 {/* Time Period Filter Dropdown */}
                 <View style={styles.dropdownWrapper}>
@@ -492,7 +507,7 @@ export default function AnalyticsScreen() {
 
                   {isTimeDropdownOpen && (
                     <View style={styles.dropdownMenu}>
-                      {["Last Week", "Last Month", "Last Year"].map((period, index) => (
+                      {TIME_PERIODS.map((period, index) => (
                         <Pressable
                           key={`period-${period}`}
                           style={[
@@ -525,17 +540,17 @@ export default function AnalyticsScreen() {
                     const now = new Date();
                     let filteredData = schoolAnalytics.trend;
 
-                    if (selectedTimePeriod === "Last Week") {
+                    if (selectedTimePeriod === t("analytics.lastWeek")) {
                       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
                       filteredData = schoolAnalytics.trend.filter(
                         item => new Date(item._id) >= weekAgo
                       );
-                    } else if (selectedTimePeriod === "Last Month") {
+                    } else if (selectedTimePeriod === t("analytics.lastMonth")) {
                       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                       filteredData = schoolAnalytics.trend.filter(
                         item => new Date(item._id) >= monthAgo
                       );
-                    } else if (selectedTimePeriod === "Last Year") {
+                    } else if (selectedTimePeriod === t("analytics.lastYear")) {
                       const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
                       filteredData = schoolAnalytics.trend.filter(
                         item => new Date(item._id) >= yearAgo
@@ -555,7 +570,7 @@ export default function AnalyticsScreen() {
             <View style={styles.trendSection}>
               {/* Header with Dropdown */}
               <View style={styles.cardHeader}>
-                <Text style={styles.trendTitle}>Food Waste Trend by Class</Text>
+                <Text style={styles.trendTitle}>{t("analytics.foodWasteTrendByClass")}</Text>
 
                 {/* Class Filter Dropdown */}
                 <View style={styles.dropdownWrapper}>
@@ -613,7 +628,7 @@ export default function AnalyticsScreen() {
           {/* Top Waste Reasons */}
           {schoolAnalytics && schoolAnalytics.topReasons && schoolAnalytics.topReasons.length > 0 && (
             <View style={styles.trendSection}>
-              <Text style={styles.trendTitle}>Top Waste Reasons</Text>
+              <Text style={styles.trendTitle}>{t("analytics.topWasteReasons")}</Text>
               {schoolAnalytics.topReasons.map((item, index) => {
                 const barColors = ['#10B981', '#059669', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444', '#06B6D4'];
                 const barColor = barColors[index % barColors.length];

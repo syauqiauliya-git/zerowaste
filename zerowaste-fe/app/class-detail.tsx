@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteClass, updateClass } from "@/store/slices/classSlice";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Alert,
   Pressable,
@@ -16,6 +17,7 @@ function ClassDetail() {
   const { classId } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const { loading } = useAppSelector((state) => state.classes);
   const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
   const [classDetail, setClassDetail] = useState<Class | null>(null);
@@ -40,7 +42,7 @@ function ClassDetail() {
 
   const handleSave = async () => {
     if (!editData.class_name.trim() || !editData.grade_level.trim()) {
-      alert("Please fill in all required fields");
+      alert(t("class.fillRequiredFields"));
       return;
     }
 
@@ -58,21 +60,21 @@ function ClassDetail() {
       router.back();
     } catch (error) {
       console.error("Failed to update class:", error);
-      alert("Failed to update class");
+      alert(t("class.failedToUpdate"));
     }
   };
 
   const handleDelete = async () => {
     Alert.alert(
-      "Delete Class",
-      "Are you sure you want to delete this class? This action cannot be undone.",
+      t("class.deleteClass"),
+      t("class.deleteConfirm"),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t("class.delete"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -81,7 +83,7 @@ function ClassDetail() {
               router.back();
             } catch (error) {
               console.error("Failed to delete class:", error);
-              alert("Failed to delete class");
+              alert(t("class.failedToDelete"));
             }
           },
         },
@@ -96,9 +98,9 @@ function ClassDetail() {
   return (
     <View style={styles.scrollView}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Class Information</Text>
+        <Text style={styles.sectionTitle}>{t("class.classInformation")}</Text>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Class name:</Text>
+          <Text style={styles.label}>{t("class.className")}:</Text>
           {role !== "admin" ? (
             <Text style={styles.value}>{editData.class_name}</Text>
           ) : (
@@ -108,12 +110,12 @@ function ClassDetail() {
               onChangeText={(text) =>
                 setEditData({ ...editData, class_name: text })
               }
-              placeholder="Enter class name"
+              placeholder={t("class.enterClassName")}
             />
           )}
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Grade Level:</Text>
+          <Text style={styles.label}>{t("class.gradeLevel")}:</Text>
           {role !== "admin" ? (
             <Text style={styles.value}>{editData.grade_level}</Text>
           ) : (
@@ -123,13 +125,13 @@ function ClassDetail() {
               onChangeText={(text) =>
                 setEditData({ ...editData, grade_level: text })
               }
-              placeholder="Enter grade level"
+              placeholder={t("class.enterGradeLevel")}
               multiline
             />
           )}
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Created At:</Text>
+          <Text style={styles.label}>{t("class.createdAt")}:</Text>
           <Text style={styles.value}>
             {classDetail?.createdAt
               ? new Date(classDetail.createdAt).toLocaleString()
@@ -137,7 +139,7 @@ function ClassDetail() {
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Updated At:</Text>
+          <Text style={styles.label}>{t("class.updatedAt")}:</Text>
           <Text style={styles.value}>
             {classDetail?.updatedAt
               ? new Date(classDetail.updatedAt).toLocaleString()
@@ -151,7 +153,7 @@ function ClassDetail() {
               style={[styles.button, { backgroundColor: "#EF4444" }]}
               onPress={handleDelete}
             >
-              <Text style={styles.buttonText}>Delete</Text>
+              <Text style={styles.buttonText}>{t("class.delete")}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -163,7 +165,7 @@ function ClassDetail() {
               disabled={loading}
             >
               <Text style={styles.buttonText}>
-                {loading ? "Saving..." : "Save"}
+                {loading ? t("class.saving") : t("class.save")}
               </Text>
             </Pressable>
           </View>

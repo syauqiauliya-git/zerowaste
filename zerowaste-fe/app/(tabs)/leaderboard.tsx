@@ -4,21 +4,23 @@ import { fetchLeaderboard, LeaderboardEntry } from "@/lib/analytics";
 import { dummyLeaderboardData } from "@/data/dummy-leaderboard";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Header from "@/components/ui/header";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type Period = "all" | "month" | "week";
 
-const PERIOD_LABELS: Record<Period, string> = {
-  all: "All Time",
-  month: "This Month",
-  week: "This Week",
-};
-
 export default function LeaderboardScreen() {
+  const { t } = useTranslation();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>("month");
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
+
+  const PERIOD_LABELS: Record<Period, string> = {
+    all: t("leaderboard.allTime"),
+    month: t("leaderboard.thisMonth"),
+    week: t("leaderboard.thisWeek"),
+  };
 
   useEffect(() => {
     loadLeaderboard();
@@ -33,7 +35,7 @@ export default function LeaderboardScreen() {
       setLeaderboard(dummyLeaderboardData);
     } catch (err: any) {
       console.error("Failed to fetch leaderboard:", err);
-      setError(err.message || "Failed to load leaderboard");
+      setError(err.message || t("leaderboard.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ export default function LeaderboardScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color="#10B981" />
-        <Text style={styles.loadingText}>Loading leaderboard...</Text>
+        <Text style={styles.loadingText}>{t("leaderboard.loading")}</Text>
       </View>
     );
   }
@@ -64,25 +66,25 @@ export default function LeaderboardScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Leaderboard" icon="leaderboard" />
+      <Header title={t("leaderboard.title")} icon="leaderboard" />
       <ScrollView style={styles.scrollView}>
 
 
         {leaderboard.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No leaderboard data available</Text>
+            <Text style={styles.emptyText}>{t("leaderboard.noData")}</Text>
           </View>
         ) : (
            <View style={styles.leaderboardContainer}>
              <View style={styles.headerContainer}>
                <View style={styles.header}>
-                 <Text style={styles.title}>Ranking</Text>
+                 <Text style={styles.title}>{t("leaderboard.ranking")}</Text>
                  <View style={styles.periodSelectorContainer}>
                    <Pressable
                      style={styles.periodSelector}
                      onPress={() => setShowPeriodDropdown(!showPeriodDropdown)}
                    >
-                     <Text style={styles.periodText}>Periode {PERIOD_LABELS[period]}</Text>
+                     <Text style={styles.periodText}>{t("leaderboard.period")} {PERIOD_LABELS[period]}</Text>
                      <Ionicons
                        name={showPeriodDropdown ? "chevron-up" : "chevron-down"}
                        size={20}
@@ -164,7 +166,7 @@ export default function LeaderboardScreen() {
                         isTopThree ? styles.reductionTextTop : styles.reductionTextOther,
                       ]}
                     >
-                      Pengurangan: {reductionPercentage}%
+                      {t("leaderboard.reduction")}: {reductionPercentage}%
                     </Text>
                   </View>
 

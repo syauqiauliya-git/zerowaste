@@ -39,10 +39,12 @@ export const fetchReports = async (): Promise<Report[]> => {
 export const sendReport = async (
   qr_string: string,
   feedback: string,
-  imageBase64: string // <-- this should be a base64 string
+  imageBase64: string, // <-- this should be a base64 string
+  class_id: string,
+  scan_timestamp?: string
 ) => {
   try {
-    const response = await apiFetch("/api/v1/reports", {
+    const data = await apiFetch("/api/v1/reports", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -51,30 +53,22 @@ export const sendReport = async (
         qr_payload_string: qr_string,
         verbal_feedback: feedback,
         image: imageBase64, // send base64 instead of file
+        class_id: class_id,
+        scan_timestamp: scan_timestamp || new Date().toISOString(),
       }),
     });
 
-    // If the API does NOT return ok status
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw {
-        status: response.status,
-        statusText: response.statusText,
-        ...errorData,
-      };
-    }
-
-    const data = await response.json();
     console.log("Feedback sent successfully", data);
     return data;
 
   } catch (error: any) {
     console.error(
-      `❌ Failed to send feedback (status: ${error?.status || "unknown"})`,
+      `❌ Failed to send feedback`,
       error
     );
 
-    throw error;
+    // Extract error message from backend response
+    const errorMessage = error?.message || error?.error?.message || "Failed to send report";
+    throw new Error(errorMessage);
   }
 };
