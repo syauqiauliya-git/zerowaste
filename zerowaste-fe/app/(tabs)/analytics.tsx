@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { Text, StyleSheet, View, ScrollView, ActivityIndicator, Pressable, RefreshControl } from "react-native";
 import { useEffect, useState, useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchSchools as fetchSchoolsAction } from "@/store/slices/schoolSlice";
@@ -25,6 +25,7 @@ export default function AnalyticsScreen() {
   const [sppgAnalytics, setSppgAnalytics] = useState<SPPGAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("Last Week");
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>("");
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
@@ -86,6 +87,12 @@ export default function AnalyticsScreen() {
       setLoading(false);
     }
   }, [role, selectedSchoolId]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadAnalytics();
+    setRefreshing(false);
+  };
 
   // Load initial school for admin and fetch schools to Redux
   useEffect(() => {
@@ -201,7 +208,13 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <ScrollView style={styles.mainView} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      style={styles.mainView}
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Global Analytics - for admins only */}
       {role === "admin" && (
         <View style={styles.section}>
@@ -286,7 +299,7 @@ export default function AnalyticsScreen() {
               <Text style={styles.statCardSub}>Total Dislikes</Text>
             </View>
           </View>
-}
+
           <View style={styles.trendSection}>
             <Text style={styles.trendTitle}>Active Schools: {sppgAnalytics.totalActiveSchools}</Text>
           </View>

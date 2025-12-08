@@ -3,7 +3,11 @@ import AppError from '../utils/AppError.js';
 import catchAsync from '../utils/catchAsync.js';
 import mongoose from 'mongoose';
 import DailyMenu from '../models/DailyMenu.js';
-import Class from '../models/Class.js'; // NEW IMPORT for validation
+import Class from '../models/Class.js';
+import School from '../models/School.js';
+import SPPGSchoolAssignment from '../models/SPPGSchoolAssignment.js';
+import SPPGStaff from '../models/SPPGStaff.js';
+import { createNotification } from './notificationController.js';
 
 // --- HELPER: NEW QR String Parsing (Offline Contract) ---
 const parseQrPayload = (rawString) => {
@@ -97,6 +101,60 @@ export const createReport = catchAsync(async (req, res, next) => {
   };
 
   const newReport = await DailyReport.create(finalReportData);
+
+  // 7. NOTIFICATIONS: Create notifications for teacher and SPPG staff
+
+  // A. Notification for teacher about successful report submission
+  try {
+    await createNotification({
+      user_id: req.user._id,
+      title: 'Laporan Berhasil Dikirim',
+      body: `Laporan limbah makanan untuk kelas ${selectedClass.class_name} telah berhasil dikirim. Total limbah: ${qrData.total_waste_kg} kg`,
+      type: 'success',
+      related_data: {
+        report_id: newReport._id,
+        class_name: selectedClass.class_name,
+        waste_kg: qrData.total_waste_kg
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create teacher notification:', error.message);
+  }
+
+  // B. Notification for SPPG staff about new report from their assigned school
+  try {
+    const school = await School.findById(school_id).select('school_name');
+    const assignment = await SPPGSchoolAssignment.findOne({
+      school_id: school_id,
+      is_active: true
+    }).select('sppg_id');
+
+    if (assignment && school) {
+      const sppgStaffList = await mongoose.connection.collection('sppgstaffs').find({
+        sppg_id: assignment.sppg_id,
+        status: 'APPROVED',
+        is_active: true
+      }).project({ user_id: 1 }).toArray();
+
+      for (const staff of sppgStaffList) {
+        await createNotification({
+          user_id: staff.user_id,
+          title: 'Laporan Baru dari Sekolah',
+          body: `Anda menerima laporan baru dari ${school.school_name} - ${selectedClass.class_name}. Total limbah makanan: ${qrData.total_waste_kg} kg`,
+          type: 'info',
+          related_data: {
+            report_id: newReport._id,
+            school_id: school_id,
+            school_name: school.school_name,
+            class_name: selectedClass.class_name,
+            waste_kg: qrData.total_waste_kg
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to create SPPG notifications:', error.message);
+  }
 
   res.status(201).json({
     status: 'success',
