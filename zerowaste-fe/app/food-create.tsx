@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { StyleSheet, Text, TextInput, View, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert, Switch } from "react-native";
+import { StyleSheet, Text, TextInput, View, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert, Switch, Modal } from "react-native";
 import { useRouter, useFocusEffect } from 'expo-router';
 import Header from '@/components/ui/header';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -9,12 +9,23 @@ import { getSppgId } from '@/lib/auth-storage';
 import { School } from '@/lib/school';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as SecureStore from 'expo-secure-store';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const SELECTED_SCHOOL_KEY = "selected_school_id";
+
+// Helper function to format date as YYYY-MM-DD in local timezone
+const formatDateLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export default function FoodCreateScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const { loading } = useAppSelector((state) => state.menus);
   const { schools } = useAppSelector((state) => state.schools);
   
@@ -28,6 +39,8 @@ export default function FoodCreateScreen() {
   const [lemak, setLemak] = useState("");
   const [karbohidrat, setKarbohidrat] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [menuDate, setMenuDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Load selected school from storage
   const loadSelectedSchool = useCallback(async () => {
@@ -89,7 +102,7 @@ export default function FoodCreateScreen() {
     const nama = namaMenu.trim();
     
     if (!selectedSppg || !selectedSchoolId || nama.length === 0) {
-      Alert.alert("Validation Error", "Please fill in all required fields (School and Menu Name).");
+      Alert.alert(t("food.validationError"), t("food.fillRequiredFields"));
       return;
     }
     
@@ -97,7 +110,7 @@ export default function FoodCreateScreen() {
       const menuData = {
         sppg: selectedSppg,
         school: selectedSchoolId,
-        menu_date: new Date().toISOString().split('T')[0],
+        menu_date: formatDateLocal(menuDate),
         nama_menu: nama,
         deskripsi: deskripsi.trim() || undefined,
         rating: 0,
@@ -115,7 +128,7 @@ export default function FoodCreateScreen() {
       router.back();
     } catch (error: any) {
       console.error('Failed to create menu:', error);
-      Alert.alert("Error", error.message || "Something went wrong!");
+      Alert.alert(t("common.error"), error.message || t("food.somethingWentWrong"));
     }
   };
 
@@ -130,21 +143,21 @@ export default function FoodCreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Header title="Create Menu" icon="restaurant" />
+        <Header title={t("food.createMenu")} icon="restaurant" />
 
         <View style={styles.container}>
           <View style={styles.formControl}>
-            <Text style={styles.label}>School <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>{t("food.school")} <Text style={styles.required}>*</Text></Text>
             <Pressable
               style={styles.selectButton}
               onPress={handleSelectSchool}
             >
               <Text style={[styles.selectText, !selectedSchool && styles.selectPlaceholder]}>
                 {schools.length === 0 
-                  ? "No school selected" 
+                  ? t("food.noSchoolSelected")
                   : selectedSchool 
                     ? selectedSchool.school_name 
-                    : "Select a school"}
+                    : t("food.selectSchool")}
               </Text>
               <Ionicons
                 name="chevron-forward"
@@ -155,22 +168,94 @@ export default function FoodCreateScreen() {
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Menu Name <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>{t("food.menuDate")} <Text style={styles.required}>*</Text></Text>
+            <Pressable
+              style={styles.selectButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.selectText}>
+                {menuDate.toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </Text>
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color="#6B7280"
+              />
+            </Pressable>
+            {Platform.OS === 'ios' ? (
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <Pressable onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.modalButton}>{t("food.cancel")}</Text>
+                      </Pressable>
+                      <Text style={styles.modalTitle}>{t("food.selectDate")}</Text>
+                      <Pressable
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={[styles.modalButton, styles.modalButtonDone]}>{t("food.done")}</Text>
+                      </Pressable>
+                    </View>
+                    <DateTimePicker
+                      value={menuDate}
+                      mode="date"
+                      display="spinner"
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) {
+                          setMenuDate(selectedDate);
+                        }
+                      }}
+                      maximumDate={new Date()}
+                      style={styles.datePicker}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  value={menuDate}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (event.type !== 'dismissed' && selectedDate) {
+                      setMenuDate(selectedDate);
+                    }
+                  }}
+                  maximumDate={new Date()}
+                />
+              )
+            )}
+          </View>
+
+          <View style={styles.formControl}>
+            <Text style={styles.label}>{t("food.menuName")} <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.inputContainer}
               value={namaMenu}
               onChangeText={setNamaMenu}
-              placeholder="Enter menu name"
+              placeholder={t("food.enterMenuName")}
             />
           </View>
 
           <View style={styles.formControl}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>{t("food.description")}</Text>
             <TextInput
               style={[styles.inputContainer, styles.textArea]}
               value={deskripsi}
               onChangeText={setDeskripsi}
-              placeholder="Enter menu description"
+              placeholder={t("food.enterDescription")}
               multiline
               numberOfLines={3}
             />
@@ -178,22 +263,22 @@ export default function FoodCreateScreen() {
 
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Harga (Rp)</Text>
+              <Text style={styles.label}>{t("food.price")} (Rp)</Text>
               <TextInput
                 style={styles.inputContainer}
                 value={harga}
                 onChangeText={setHarga}
-                placeholder="0"
+                placeholder={t("food.enterPrice")}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Protein (g)</Text>
+              <Text style={styles.label}>{t("food.protein")} (g)</Text>
               <TextInput
                 style={styles.inputContainer}
                 value={protein}
                 onChangeText={setProtein}
-                placeholder="0"
+                placeholder={t("food.enterProtein")}
                 keyboardType="numeric"
               />
             </View>
@@ -201,22 +286,22 @@ export default function FoodCreateScreen() {
 
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Lemak (g)</Text>
+              <Text style={styles.label}>{t("food.fat")} (g)</Text>
               <TextInput
                 style={styles.inputContainer}
                 value={lemak}
                 onChangeText={setLemak}
-                placeholder="0"
+                placeholder={t("food.enterFat")}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Karbohidrat (g)</Text>
+              <Text style={styles.label}>{t("food.carbohydrate")} (g)</Text>
               <TextInput
                 style={styles.inputContainer}
                 value={karbohidrat}
                 onChangeText={setKarbohidrat}
-                placeholder="0"
+                placeholder={t("food.enterCarbohydrate")}
                 keyboardType="numeric"
               />
             </View>
@@ -230,7 +315,7 @@ export default function FoodCreateScreen() {
               ]}
               onPress={() => setIsActive(!isActive)}
             >
-              <Text style={styles.checkboxLabel}>Active</Text>
+              <Text style={styles.checkboxLabel}>{t("food.active")}</Text>
               <View style={[styles.checkbox, isActive && styles.checkboxChecked]}>
                 {isActive && <Text style={styles.checkboxCheckmark}>✓</Text>}
               </View>
@@ -242,7 +327,7 @@ export default function FoodCreateScreen() {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create'}</Text>
+            <Text style={styles.buttonText}>{loading ? t("food.creating") : t("food.create")}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -363,6 +448,43 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  modalButton: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  modalButtonDone: {
+    color: '#10B981',
+    fontWeight: '600',
+  },
+  datePicker: {
+    width: '100%',
+    height: 200,
   },
 });
 
