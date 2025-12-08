@@ -4,7 +4,7 @@ import { Platform } from 'react-native'
 // Fallbacks for common dev scenarios (adjust to your LAN IP if testing on device)
 const DEFAULTS = {
   // Match backend runtime PORT (currently 5010 per server logs)
-  androidEmu: 'http://10.126.5.135:5010', // Android emulator maps host localhost
+  androidEmu: 'http://192.168.0.6:5010', // Android emulator maps host localhost
   iosSim: 'http://localhost:5010',
   deviceLAN: 'http://192.168.0.100:5010', // <- change this to your PC LAN IP
 }

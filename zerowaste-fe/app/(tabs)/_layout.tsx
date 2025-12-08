@@ -10,10 +10,12 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Image, TouchableOpacity, View } from "react-native";
 
 import { useAppSelector } from "@/store/hooks";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
+  const { t } = useTranslation();
 
   const handleNavigateToQrScanner = () => {
     router.push("/qr-scanner");
@@ -68,7 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="analytics"
         options={{
-          title: "Home",
+          title: t("tabs.home"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={28} color={color} />
           ),
@@ -77,7 +79,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: "Leaderboard",
+          title: t("tabs.leaderboard"),
           // Hide leaderboard for SPPG staff per requirement
           href: role === "sppg_staff" ? null : undefined,
           tabBarIcon: ({ color }) => (
@@ -90,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="feedback"
         options={{
-          title: "Feedback",
+          title: t("tabs.feedback"),
           // Only teachers can see this tab
           href: role === "teacher" ? undefined : null,
           tabBarIcon: ({ color }) => (
@@ -102,7 +104,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="food"
         options={{
-          title: "Food",
+          title: t("tabs.food"),
           // Only SPPG staff can see this tab
           href: role === "sppg_staff" ? undefined : null,
           tabBarIcon: ({ color }) => (
@@ -114,7 +116,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: "Reports",
+          title: t("tabs.reports"),
           // Only SPPG staff can see this tab
           href: role === "sppg_staff" ? undefined : null,
           tabBarIcon: ({ color }) => (
@@ -127,7 +129,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("tabs.settings"),
           href: role === "admin" ? undefined : null,
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="settings" size={28} color={color} />
@@ -139,7 +141,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="person-outline" size={28} color={color} />
           ),

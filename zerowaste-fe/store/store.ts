@@ -4,6 +4,7 @@ import classReducer from './slices/classSlice';
 import authReducer from './slices/authSlice';
 import menuReducer from './slices/menuSlice';
 import sppgReducer from './slices/sppgSlice';
+import languageReducer from './slices/languageSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     auth: authReducer,
     menus: menuReducer,
     sppg: sppgReducer,
+    language: languageReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

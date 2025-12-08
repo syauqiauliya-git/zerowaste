@@ -2,11 +2,13 @@ import { Stack } from "expo-router";
 import { Provider } from 'react-redux';
 import { store } from '../store/store';
 import { TokenMonitor } from '../components/auth/token-monitor';
+import { LanguageInitializer } from '../components/language-initializer';
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <TokenMonitor>
+      <LanguageInitializer>
+        <TokenMonitor>
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -155,6 +157,7 @@ export default function RootLayout() {
           />
         </Stack>
       </TokenMonitor>
+      </LanguageInitializer>
     </Provider>
   );
 }
