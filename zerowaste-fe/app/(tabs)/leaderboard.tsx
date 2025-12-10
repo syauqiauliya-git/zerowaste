@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import { fetchLeaderboard, LeaderboardEntry } from "@/lib/analytics";
-import { dummyLeaderboardData } from "@/data/dummy-leaderboard";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Header from "@/components/ui/header";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -30,9 +29,8 @@ export default function LeaderboardScreen() {
     try {
       setLoading(true);
       setError(null);
-      // const response = await fetchLeaderboard(period);
-      // setLeaderboard(response.data);
-      setLeaderboard(dummyLeaderboardData);
+      const response = await fetchLeaderboard(period);
+      setLeaderboard(response.data);
     } catch (err: any) {
       console.error("Failed to fetch leaderboard:", err);
       setError(err.message || t("leaderboard.failedToLoad"));
