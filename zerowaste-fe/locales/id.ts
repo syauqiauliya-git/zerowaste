@@ -131,6 +131,30 @@ export const id = {
     reportSubmitted: 'Laporan berhasil dikirim',
   },
 
+  // Reports
+  reports: {
+    title: 'Laporan',
+    reportDetails: 'Detail Laporan',
+    loading: 'Memuat laporan...',
+    loadingReport: 'Loading report...',
+    reportNotFound: 'Report not found',
+    noReportsAvailable: 'No reports available',
+    failedToLoad: 'Gagal memuat detail laporan',
+    statistics: 'Statistics',
+    totalWaste: 'Total Waste',
+    likes: 'Likes',
+    dislikes: 'Dislikes',
+    teacher: 'Teacher',
+    class: 'Class',
+    submitted: 'Submitted',
+    verbalFeedback: 'Verbal Feedback',
+    noVerbalFeedback: 'No verbal feedback provided.',
+    status: {
+      submitted: 'Submitted',
+      pending: 'Pending',
+    },
+  },
+
   // Analytics
   analytics: {
     loading: 'Memuat analitik...',
