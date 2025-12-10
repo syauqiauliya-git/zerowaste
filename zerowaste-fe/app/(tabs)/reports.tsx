@@ -11,9 +11,11 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function ReportsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
@@ -49,12 +51,12 @@ export default function ReportsScreen() {
 
   return (
     <View style={styles.mainView}>
-      <Header title="Reports" icon="assessment" />
+      <Header title={t("reports.title")} icon="assessment" />
 
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#10B981" />
-          <Text style={styles.loadingText}>Loading reports...</Text>
+          <Text style={styles.loadingText}>{t("reports.loading")}</Text>
         </View>
       ) : (
         <FlatList
@@ -64,7 +66,7 @@ export default function ReportsScreen() {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No reports available</Text>
+            <Text style={styles.emptyText}>{t("reports.noReportsAvailable")}</Text>
           }
           // Enable pull-to-refresh
           refreshControl={

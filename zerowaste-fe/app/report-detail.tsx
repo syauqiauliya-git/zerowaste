@@ -11,6 +11,7 @@ import {
 import Header from "@/components/ui/header";
 import { fetchReportById, Report } from "@/lib/report";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Helper to format date nicely
 const formatDate = (dateString: string) => {
@@ -36,6 +37,7 @@ const formatDateTime = (dateString: string) => {
 export default function ReportDetailScreen() {
   const { reportId } = useLocalSearchParams<{ reportId: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
 
@@ -47,7 +49,7 @@ export default function ReportDetailScreen() {
       setReport(reportData);
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Failed to load report details");
+      Alert.alert(t("common.error"), t("reports.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -62,13 +64,13 @@ export default function ReportDetailScreen() {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#10B981" />
-          <Text style={styles.loadingText}>Loading report...</Text>
+          <Text style={styles.loadingText}>{t("reports.loadingReport")}</Text>
         </View>
       );
     
     if (!report)
       return (
-        <Text style={styles.emptyText}>Report not found</Text>
+        <Text style={styles.emptyText}>{t("reports.reportNotFound")}</Text>
       );
 
     return (
@@ -88,7 +90,11 @@ export default function ReportDetailScreen() {
                   : styles.statusPending,
               ]}
             >
-              <Text style={styles.statusText}>{report.status}</Text>
+              <Text style={styles.statusText}>
+                {report.status === "submitted" 
+                  ? t("reports.status.submitted") 
+                  : t("reports.status.pending")}
+              </Text>
             </View>
           </View>
 
@@ -98,17 +104,17 @@ export default function ReportDetailScreen() {
           <View style={styles.metaSection}>
             <View style={styles.metaRow}>
               <MaterialIcons name="person-outline" size={18} color="#6B7280" />
-              <Text style={styles.metaLabel}>Teacher:</Text>
+              <Text style={styles.metaLabel}>{t("reports.teacher")}:</Text>
               <Text style={styles.metaValue}>{report.teacher.name}</Text>
             </View>
             <View style={styles.metaRow}>
               <MaterialIcons name="class" size={18} color="#6B7280" />
-              <Text style={styles.metaLabel}>Class:</Text>
+              <Text style={styles.metaLabel}>{t("reports.class")}:</Text>
               <Text style={styles.metaValue}>{report.class.class_name}</Text>
             </View>
             <View style={styles.metaRow}>
               <MaterialIcons name="schedule" size={18} color="#6B7280" />
-              <Text style={styles.metaLabel}>Submitted:</Text>
+              <Text style={styles.metaLabel}>{t("reports.submitted")}:</Text>
               <Text style={styles.metaValue}>{formatDateTime(report.submitted_at)}</Text>
             </View>
           </View>
@@ -116,25 +122,25 @@ export default function ReportDetailScreen() {
 
         {/* Statistics Card */}
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Statistics</Text>
+          <Text style={styles.sectionTitle}>{t("reports.statistics")}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
-              <Text style={styles.statLabel}>Total Waste</Text>
+              <Text style={styles.statLabel}>{t("reports.totalWaste")}</Text>
               <Text style={[styles.statValue, { color: "#EF4444" }]}>
                 {report.total_waste_kg} kg
               </Text>
             </View>
             <View style={styles.statCard}>
               <MaterialIcons name="thumb-up-off-alt" size={24} color="#10B981" />
-              <Text style={styles.statLabel}>Likes</Text>
+              <Text style={styles.statLabel}>{t("reports.likes")}</Text>
               <Text style={[styles.statValue, { color: "#10B981" }]}>
                 {report.total_likes}
               </Text>
             </View>
             <View style={styles.statCard}>
               <MaterialIcons name="thumb-down-off-alt" size={24} color="#F59E0B" />
-              <Text style={styles.statLabel}>Dislikes</Text>
+              <Text style={styles.statLabel}>{t("reports.dislikes")}</Text>
               <Text style={[styles.statValue, { color: "#F59E0B" }]}>
                 {report.total_dislikes}
               </Text>
@@ -146,11 +152,11 @@ export default function ReportDetailScreen() {
         <View style={styles.card}>
           <View style={styles.feedbackHeader}>
             <MaterialIcons name="feedback" size={20} color="#10B981" />
-            <Text style={styles.feedbackTitle}>Verbal Feedback</Text>
+            <Text style={styles.feedbackTitle}>{t("reports.verbalFeedback")}</Text>
           </View>
           <View style={styles.divider} />
           <Text style={styles.feedbackText}>
-            {report.verbal_feedback || "No verbal feedback provided."}
+            {report.verbal_feedback || t("reports.noVerbalFeedback")}
           </Text>
         </View>
       </View>
@@ -159,7 +165,7 @@ export default function ReportDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Header title="Report Details" icon="assessment" />
+      <Header title={t("reports.reportDetails")} icon="assessment" />
       {renderBody()}
     </ScrollView>
   );

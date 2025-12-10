@@ -131,6 +131,30 @@ export const en = {
     reportSubmitted: 'Report submitted successfully',
   },
 
+  // Reports
+  reports: {
+    title: 'Reports',
+    reportDetails: 'Report Details',
+    loading: 'Loading reports...',
+    loadingReport: 'Loading report...',
+    reportNotFound: 'Report not found',
+    noReportsAvailable: 'No reports available',
+    failedToLoad: 'Failed to load report details',
+    statistics: 'Statistics',
+    totalWaste: 'Total Waste',
+    likes: 'Likes',
+    dislikes: 'Dislikes',
+    teacher: 'Teacher',
+    class: 'Class',
+    submitted: 'Submitted',
+    verbalFeedback: 'Verbal Feedback',
+    noVerbalFeedback: 'No verbal feedback provided.',
+    status: {
+      submitted: 'Submitted',
+      pending: 'Pending',
+    },
+  },
+
   // Analytics
   analytics: {
     loading: 'Loading analytics...',
