@@ -320,6 +320,12 @@ export const id = {
     failedToDelete: 'Gagal menghapus notifikasi',
     error: 'Kesalahan',
     recently: 'Baru saja',
+    teacherReportTitle: 'Laporan Berhasil Dikirim',
+    teacherReportBody: 'Laporan limbah makanan untuk kelas {{className}} telah berhasil dikirim. Total limbah: {{kg}} kg',
+    sppgNewReportTitle: 'Laporan Baru dari Sekolah',
+    sppgNewReportBody: 'Anda menerima laporan baru dari {{schoolName}} - {{className}}. Total limbah makanan: {{kg}} kg',
+    adminPendingTitle: 'Pendaftaran Baru Menunggu Persetujuan',
+    adminPendingBody: 'Ada pendaftaran baru dari {{name}} sebagai {{roleName}} yang menunggu persetujuan Anda',
   },
 
   // Auth
