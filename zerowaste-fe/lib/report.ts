@@ -36,6 +36,11 @@ export const fetchReports = async (): Promise<Report[]> => {
   return response.data.reports;
 };
 
+export const fetchReportById = async (reportId: string): Promise<Report> => {
+  const response = await apiFetch<{ data: { report: Report } }>(`/api/v1/reports/${reportId}`);
+  return response.data.report;
+};
+
 export const sendReport = async (
   qr_string: string,
   feedback: string,

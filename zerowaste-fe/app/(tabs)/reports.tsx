@@ -2,6 +2,7 @@ import Header from "@/components/ui/header";
 import { fetchReports, Report } from "@/lib/report";
 import renderReportItem from "@/components/report/render-report-item";
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "expo-router";
 import {
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 } from "react-native";
 
 export default function ReportsScreen() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
@@ -37,6 +39,14 @@ export default function ReportsScreen() {
     fetchData().finally(() => setRefreshing(false));
   }, []);
 
+  // Handle report item press
+  const handleReportPress = useCallback((report: Report) => {
+    router.push({
+      pathname: "/report-detail",
+      params: { reportId: report._id },
+    });
+  }, [router]);
+
   return (
     <View style={styles.mainView}>
       <Header title="Reports" icon="assessment" />
@@ -49,7 +59,7 @@ export default function ReportsScreen() {
       ) : (
         <FlatList
           data={reports}
-          renderItem={renderReportItem}
+          renderItem={({ item }) => renderReportItem({ item, onPress: handleReportPress })}
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
