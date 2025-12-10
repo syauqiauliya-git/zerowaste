@@ -12,12 +12,56 @@ import {
   type Notification
 } from '@/lib/notification'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const { t, language } = useTranslation()
+
+  const translateNotification = (n: Notification) => {
+    const data = n.related_data || {}
+    // Teacher: report submitted
+    if (n.title === 'Laporan Berhasil Dikirim') {
+      const title = t('notifications.teacherReportTitle')
+      const className = data.class_name || data.className || '-'
+      const kg = data.waste_kg ?? data.total_waste_kg ?? data.totalKg ?? data.total_kg
+      const body = t('notifications.teacherReportBody')
+        .replace('{{className}}', String(className))
+        .replace('{{kg}}', String(kg ?? '-'))
+      return { title, body }
+    }
+
+    // SPPG Staff: new report from school
+    if (n.title === 'Laporan Baru dari Sekolah') {
+      const title = t('notifications.sppgNewReportTitle')
+      const schoolName = data.school_name || data.schoolName || '-'
+      const className = data.class_name || data.className || '-'
+      const kg = data.waste_kg ?? data.total_waste_kg ?? data.totalKg ?? data.total_kg
+      const body = t('notifications.sppgNewReportBody')
+        .replace('{{schoolName}}', String(schoolName))
+        .replace('{{className}}', String(className))
+        .replace('{{kg}}', String(kg ?? '-'))
+      return { title, body }
+    }
+
+    // Admin: new registration pending approval
+    if (n.title === 'Pendaftaran Baru Menunggu Persetujuan') {
+      const title = t('notifications.adminPendingTitle')
+      const name = data.name || '-'
+      const role = (data.role || '').toLowerCase()
+      const roleName = t(`auth.roles.${role === 'teacher' ? 'teacher' : role === 'sppg_staff' ? 'sppg' : 'admin'}`)
+      const body = t('notifications.adminPendingBody')
+        .replace('{{name}}', String(name))
+        .replace('{{roleName}}', String(roleName))
+      return { title, body }
+    }
+
+    // Default: use server-provided strings
+    return { title: n.title, body: n.body }
+  }
 
   const loadNotifications = async () => {
     try {
@@ -27,7 +71,7 @@ export default function NotificationsScreen() {
       setUnreadCount(response.unreadCount)
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
-      Alert.alert('Error', 'Failed to load notifications')
+      Alert.alert(t('notifications.error'), t('notifications.failedToLoad'))
     } finally {
       setLoading(false)
     }
@@ -60,10 +104,10 @@ export default function NotificationsScreen() {
       await markAllNotificationsAsRead()
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
       setUnreadCount(0)
-      Alert.alert('Success', 'All notifications marked as read')
+      Alert.alert(t('notifications.success'), t('notifications.allMarkedAsRead'))
     } catch (error) {
       console.error('Failed to mark all as read:', error)
-      Alert.alert('Error', 'Failed to mark all as read')
+      Alert.alert(t('notifications.error'), t('notifications.failedToMarkAll'))
     }
   }
 
@@ -73,7 +117,7 @@ export default function NotificationsScreen() {
       setNotifications(prev => prev.filter(n => n._id !== notificationId))
     } catch (error) {
       console.error('Failed to delete notification:', error)
-      Alert.alert('Error', 'Failed to delete notification')
+      Alert.alert(t('notifications.error'), t('notifications.failedToDelete'))
     }
   }
 
@@ -84,7 +128,7 @@ export default function NotificationsScreen() {
         onPress={() => handleDelete(notificationId)}
       >
         <MaterialIcons name="delete" size={24} color="#FFF" />
-        <Text style={styles.deleteText}>Delete</Text>
+        <Text style={styles.deleteText}>{t('notifications.delete')}</Text>
       </TouchableOpacity>
     )
   }
@@ -93,7 +137,7 @@ export default function NotificationsScreen() {
     try {
       return formatDistanceToNow(new Date(date), { addSuffix: true })
     } catch {
-      return 'Recently'
+      return t('notifications.recently')
     }
   }
 
@@ -105,25 +149,25 @@ export default function NotificationsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Header title="Notifications" icon="notifications" />
+        <Header title={t('notifications.title')} icon="notifications" />
 
         <View style={styles.headerRow}>
           <Text style={styles.subtitle}>
-            {unreadCount} unread
+            {unreadCount} {t('notifications.unread')}
           </Text>
           {unreadCount > 0 && (
             <TouchableOpacity onPress={handleMarkAllAsRead}>
-              <Text style={styles.markAllBtn}>Mark all as read</Text>
+              <Text style={styles.markAllBtn}>{t('notifications.markAllAsRead')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {loading ? (
-          <Text style={styles.loadingText}>Loading notifications...</Text>
+          <Text style={styles.loadingText}>{t('notifications.loadingNotifications')}</Text>
         ) : notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="notifications-off-outline" size={48} color="#9CA3AF" />
-            <Text style={styles.emptyText}>No notifications yet</Text>
+            <Text style={styles.emptyText}>{t('notifications.noNotificationsYet')}</Text>
           </View>
         ) : (
           notifications.map((n) => (
@@ -150,8 +194,8 @@ export default function NotificationsScreen() {
                   {n.type === 'error' && <MaterialIcons name="error" size={20} color="#991b1b" />}
                 </View>
                 <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle}>{n.title}</Text>
-                  <Text style={styles.cardText}>{n.body}</Text>
+                  <Text style={styles.cardTitle}>{translateNotification(n).title}</Text>
+                  <Text style={styles.cardText}>{translateNotification(n).body}</Text>
                   <Text style={styles.cardTime}>
                     <Ionicons name="time" size={12} color="#6B7280" /> {" "}{getTimeAgo(n.createdAt)}
                   </Text>

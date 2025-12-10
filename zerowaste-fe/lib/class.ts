@@ -55,7 +55,7 @@ export async function deleteClass(classId: string) {
 }
 
 export async function fetchClassesBySchoolId(schoolId: string) {
-  return apiFetch<{ status: string; results: number; data: { classes: Class[] } }>(
+  return apiFetch<{ status: string; results: number; data: Class[] }>(
     `/api/v1/classes/school/${schoolId}`
   );
 }

@@ -320,6 +320,12 @@ export const en = {
     failedToDelete: 'Failed to delete notification',
     error: 'Error',
     recently: 'Recently',
+    teacherReportTitle: 'Report Submitted Successfully',
+    teacherReportBody: 'Food waste report for class {{className}} has been submitted successfully. Total waste: {{kg}} kg',
+    sppgNewReportTitle: 'New Report from School',
+    sppgNewReportBody: 'You received a new report from {{schoolName}} - {{className}}. Total food waste: {{kg}} kg',
+    adminPendingTitle: 'New Registration Pending Approval',
+    adminPendingBody: 'There is a new registration from {{name}} as {{roleName}} awaiting your approval',
   },
 
   // Auth

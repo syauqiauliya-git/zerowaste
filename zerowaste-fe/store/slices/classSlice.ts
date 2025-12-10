@@ -59,10 +59,10 @@ export const fetchClassesBySchoolId = createAsyncThunk(
       console.log("Fetching classes for school ID:", schoolId);
       const response = await apiFetchClassesBySchoolId(schoolId);
       console.log("Classes by school ID raw response:", response);
-      if (!response || !response.data || !response.data.classes) {
+      if (!response || !response.data || !Array.isArray(response.data)) {
         throw new Error('Invalid response format from API');
       }
-      const mappedData = response.data.classes.map(mapApiClassToSliceClass);
+      const mappedData = response.data.map(mapApiClassToSliceClass);
       console.log("Mapped class data:", mappedData);
       return mappedData;
     } catch (error) {
