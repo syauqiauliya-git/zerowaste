@@ -32,6 +32,7 @@ export default function AnalyticsScreen() {
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>("");
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+  const [selectedReasonCode, setSelectedReasonCode] = useState<string | null>(null);
 
   const TIME_PERIODS = [
     t("analytics.lastWeek"),
@@ -633,11 +634,22 @@ export default function AnalyticsScreen() {
                 const barColors = ['#10B981', '#059669', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444', '#06B6D4'];
                 const barColor = barColors[index % barColors.length];
 
+                const reasonDescriptions: Record<string, string> = {
+                  'A': 'Bau tak sedap',
+                  'B': 'Teksturnya aneh',
+                  'C': 'Rasa makanan aneh',
+                  'D': 'Tidak suka/minat menunya',
+                  'E': 'Porsi tidak sesuai'
+                };
+
                 return (
                   <View key={index} style={styles.reasonRow}>
-                    <View style={styles.reasonBadge}>
+                    <Pressable
+                      style={styles.reasonBadge}
+                      onPress={() => setSelectedReasonCode(selectedReasonCode === item.code ? null : item.code)}
+                    >
                       <Text style={styles.reasonCode}>{item.code}</Text>
-                    </View>
+                    </Pressable>
                     <View style={styles.reasonBar}>
                       <View
                         style={[
@@ -649,7 +661,12 @@ export default function AnalyticsScreen() {
                         ]}
                       />
                     </View>
-                    <Text style={styles.reasonCount}>{item.count}</Text>
+                    <View style={styles.reasonCountContainer}>
+                      <Text style={styles.reasonCount}>{item.count}</Text>
+                      {selectedReasonCode === item.code && reasonDescriptions[item.code] && (
+                        <Text style={styles.reasonTooltip}>{reasonDescriptions[item.code]}</Text>
+                      )}
+                    </View>
                   </View>
                 );
               })}
@@ -898,6 +915,16 @@ const styles = StyleSheet.create({
     color: "#111827",
     minWidth: 30,
     textAlign: "right",
+  },
+  reasonCountContainer: {
+    alignItems: "flex-end",
+    minWidth: 30,
+  },
+  reasonTooltip: {
+    fontSize: 11,
+    color: "#6B7280",
+    marginTop: 2,
+    fontStyle: "italic",
   },
   cardHeader: {
     flexDirection: "row",
