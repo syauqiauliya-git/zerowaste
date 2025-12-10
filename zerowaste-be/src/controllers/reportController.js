@@ -205,4 +205,60 @@ export const getAllReports = catchAsync(async (req, res, next) => {
   });
 });
 
-export default { createReport, getAllReports };
+// --- CORE HANDLER: GET /api/v1/reports/:id ---
+export const getReportById = catchAsync(async (req, res, next) => {
+  const reportId = req.params.id;
+
+  // Build the query with the same populate structure as getAllReports
+  let query = DailyReport.findById(reportId)
+    .populate({
+      path: 'teacher',
+      select: 'name user_id',
+      populate: {
+        path: 'user_id',
+        select: 'email role'
+      }
+    })
+    .populate({
+      path: 'class',
+      select: 'class_name school_id',
+      populate: {
+        path: 'school_id',
+        select: 'school_name'
+      }
+    })
+    .populate('menu', 'nama_menu');
+
+  const report = await query;
+
+  if (!report) {
+    return next(new AppError('Laporan dengan ID tersebut tidak ditemukan', 404));
+  }
+
+  // SECURITY: Ensure SPPG staff can only view reports from their assigned schools
+  if (req.user.role === 'sppg_staff' && req.user.sppg_id) {
+    const sppgMenus = await DailyMenu.find({ sppg: req.user.sppg_id }).select('_id');
+    const menuIds = sppgMenus.map(menu => menu._id.toString());
+    
+    if (!menuIds.includes(report.menu._id.toString())) {
+      return next(new AppError('Anda tidak memiliki akses ke laporan ini.', 403));
+    }
+  }
+
+  // SECURITY: Ensure teacher can only view reports from their own school
+  if (req.user.role === 'teacher' && req.user.school_id) {
+    const teacherSchoolId = req.user.school_id.toString();
+    const reportSchoolId = report.class.school_id._id.toString();
+    
+    if (teacherSchoolId !== reportSchoolId) {
+      return next(new AppError('Anda tidak memiliki akses ke laporan ini.', 403));
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { report },
+  });
+});
+
+export default { createReport, getAllReports, getReportById };

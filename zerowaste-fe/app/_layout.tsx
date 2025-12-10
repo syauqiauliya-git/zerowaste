@@ -155,6 +155,17 @@ function StackNavigator() {
           headerTintColor: '#fff',
         }}
       />
+      <Stack.Screen
+        name="report-detail"
+        options={{
+          title: 'Report Details',
+          presentation: 'modal',
+          headerStyle: {
+            backgroundColor: '#10B981',
+          },
+          headerTintColor: '#fff',
+        }}
+      />
     </Stack>
   );
 }

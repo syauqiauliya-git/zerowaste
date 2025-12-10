@@ -1,5 +1,5 @@
 import { Report } from "@/lib/report";
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons"; // Ensure you have this installed
 
 
@@ -13,9 +13,14 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const renderReportItem = ({ item }: { item: Report }) => {
-  return (
-    <View style={styles.card}>
+interface RenderReportItemProps {
+  item: Report;
+  onPress?: (item: Report) => void;
+}
+
+const renderReportItem = ({ item, onPress }: RenderReportItemProps) => {
+  const content = (
+    <>
       {/* Header: Menu Name & Status */}
       <View style={styles.cardHeader}>
         <View style={styles.headerTextContainer}>
@@ -88,8 +93,18 @@ const renderReportItem = ({ item }: { item: Report }) => {
           </View>
         </View>
       </View>
-    </View>
+    </>
   );
+
+  if (onPress) {
+    return (
+      <Pressable style={styles.card} onPress={() => onPress(item)}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={styles.card}>{content}</View>;
 };
 
 export default renderReportItem;

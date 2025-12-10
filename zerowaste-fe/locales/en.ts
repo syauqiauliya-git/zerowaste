@@ -161,6 +161,13 @@ export const en = {
 
   // Food
   food: {
+    title: 'Food Management',
+    subtitle: 'Track and manage food inventory',
+    addFood: 'Add Food',
+    loadingMenus: 'Loading menus...',
+    noFoodFound: 'No food found',
+    totalItems: 'Total Items',
+    activeItems: 'Active Items',
     createMenu: 'Create Menu',
     editMenu: 'Edit Menu',
     menuDetail: 'Menu Detail',

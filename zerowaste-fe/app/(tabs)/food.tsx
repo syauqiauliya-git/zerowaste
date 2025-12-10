@@ -5,7 +5,7 @@ import {
   View,
   Text,
   Pressable,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Menu } from "@/lib/menu";
@@ -13,11 +13,13 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMenus } from "@/store/slices/menuSlice";
 import FoodItem from "@/components/food/food-item";
 import FoodStatistics from "@/components/food/food-statistics";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function FoodScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { menus: foodList, loading } = useAppSelector((state) => state.menus);
+  const { t } = useTranslation();
 
   useEffect(() => {
     dispatch(fetchMenus());
@@ -34,18 +36,18 @@ export default function FoodScreen() {
   };
 
   return (
-    <View style={styles.scrollView}>
+    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.sectionTitle}>Food Management</Text>
-          <Text>Track and manage food inventory</Text>
+          <Text style={styles.sectionTitle}>{t("food.title")}</Text>
+          <Text>{t("food.subtitle")}</Text>
         </View>
 
         <Pressable
           style={styles.addFoodButton}
           onPress={() => router.push("/food-create")}
         >
-          <Text style={styles.addFoodButtonText}>+ Add Food</Text>
+          <Text style={styles.addFoodButtonText}>+ {t("food.addFood")}</Text>
         </Pressable>
       </View>
 
@@ -55,22 +57,20 @@ export default function FoodScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#10B981" />
-            <Text style={styles.loadingText}>Loading menus...</Text>
+            <Text style={styles.loadingText}>{t("food.loadingMenus")}</Text>
           </View>
+        ) : foodList.length === 0 ? (
+          <Text style={styles.emptyText}>{t("food.noFoodFound")}</Text>
         ) : (
-          <FlatList
-            data={foodList}
-            renderItem={renderFoodItem}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No food found</Text>
-            }
-            keyExtractor={(item) => item._id}
-            showsVerticalScrollIndicator={false}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
+          foodList.map((item, index) => (
+            <View key={item._id}>
+              {index > 0 && <View style={styles.separator} />}
+              {renderFoodItem({ item })}
+            </View>
+          ))
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   foodList: {
-    marginBottom: 16,
+    marginBottom: 26,
   },
   loadingContainer: {
     padding: 20,

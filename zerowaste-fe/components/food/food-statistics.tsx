@@ -1,23 +1,25 @@
 import { StyleSheet, View, Text } from "react-native";
 import { Colors } from "@/constants/theme";
 import { Menu } from "@/lib/menu";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface FoodStatisticsProps {
   menus: Menu[];
 }
 
 export default function FoodStatistics({ menus }: FoodStatisticsProps) {
+  const { t } = useTranslation();
   const totalItems = menus.length;
   const activeItems = menus.filter((menu) => menu.is_active).length;
 
   return (
     <View style={styles.statistics}>
       <View style={styles.totalItem}>
-        <Text style={styles.totalItemText}>Total Items</Text>
+        <Text style={styles.totalItemText}>{t("food.totalItems")}</Text>
         <Text style={styles.totalItemValue}>{totalItems}</Text>
       </View>
       <View style={styles.totalItem}>
-        <Text style={styles.totalItemText}>Active Items</Text>
+        <Text style={styles.totalItemText}>{t("food.activeItems")}</Text>
         <Text style={styles.totalItemValue}>{activeItems}</Text>
       </View>
     </View>

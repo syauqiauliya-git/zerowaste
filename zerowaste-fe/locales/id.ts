@@ -161,6 +161,13 @@ export const id = {
 
   // Food
   food: {
+    title: 'Manajemen Makanan',
+    subtitle: 'Lacak dan kelola inventori makanan',
+    addFood: 'Tambah',
+    loadingMenus: 'Memuat menu...',
+    noFoodFound: 'Tidak ada makanan ditemukan',
+    totalItems: 'Total Item',
+    activeItems: 'Item Aktif',
     createMenu: 'Buat Menu',
     editMenu: 'Edit Menu',
     menuDetail: 'Detail Menu',
