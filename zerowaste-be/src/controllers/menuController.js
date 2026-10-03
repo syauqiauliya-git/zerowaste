@@ -4,10 +4,13 @@ import catchAsync from '../utils/catchAsync.js';
 
 // Handler for POST /api/v1/menus
 export const createMenu = catchAsync(async (req, res, next) => {
-  // Inject the User ID from the JWT payload into the request body 
-  // to link the menu to the authenticated creator.
-  req.body.created_by = req.user._id; 
-  
+  // Inject the User ID and SPPG ID from the JWT payload into the request body
+  req.body.created_by = req.user._id;
+
+  if (req.user.role === 'sppg_staff' && req.user.sppg_id) {
+    req.body.sppg = req.user.sppg_id;
+  }
+
   const newMenu = await DailyMenu.create(req.body);
 
   res.status(201).json({
@@ -20,11 +23,17 @@ export const createMenu = catchAsync(async (req, res, next) => {
 
 // Handler for GET /api/v1/menus
 export const getAllMenus = catchAsync(async (req, res, next) => {
+  const filter = {};
+
+  if (req.user.role === 'sppg_staff' && req.user.sppg_id) {
+    filter.sppg = req.user.sppg_id;
+  }
+
   // Use .populate() to retrieve referenced data (SPPG, School, User) for display
-  const menus = await DailyMenu.find()
+  const menus = await DailyMenu.find(filter)
     .populate('sppg', 'name')
     .populate('school', 'school_name')
-    .populate('created_by', 'email'); 
+    .populate('created_by', 'email');
 
   res.status(200).json({
     status: 'success',
@@ -83,7 +92,7 @@ export const deleteMenu = catchAsync(async (req, res, next) => {
 
   res.status(204).json({
     status: 'success',
-    data: null, 
+    data: null,
   });
 });
 

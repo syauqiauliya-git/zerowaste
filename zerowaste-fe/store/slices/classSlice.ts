@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { 
-  Class, 
-  fetchClasses as apiFetchClasses, 
+import {
+  Class,
+  fetchClasses as apiFetchClasses,
   fetchClassesBySchoolId as apiFetchClassesBySchoolId,
-  createClass as apiCreateClass, 
-  updateClass as apiUpdateClass, 
-  deleteClass as apiDeleteClass 
+  createClass as apiCreateClass,
+  updateClass as apiUpdateClass,
+  deleteClass as apiDeleteClass
 } from '@/lib/class';
 
 interface ClassState {
@@ -23,9 +23,12 @@ const initialState: ClassState = {
 // Helper function to map API class to slice class format
 const mapApiClassToSliceClass = (apiClass: any): Class => ({
   _id: apiClass._id,
-  school_id: {
+  school_id: apiClass.school_id ? {
     _id: apiClass.school_id._id,
     school_name: apiClass.school_id.school_name
+  } : {
+    _id: '',
+    school_name: 'Unknown School'
   },
   class_name: apiClass.class_name,
   grade_level: apiClass.grade_level,
@@ -38,8 +41,14 @@ const mapApiClassToSliceClass = (apiClass: any): Class => ({
 export const fetchClasses = createAsyncThunk(
   'classes/fetchClasses',
   async () => {
-    const classes = await apiFetchClasses();
-    return classes.map(mapApiClassToSliceClass);
+    console.log("Fetching classes");
+    const response = await apiFetchClasses();
+    console.log("fetchClasses raw response:", response);
+    console.log("Testinggg");
+    const mappedData = response.data.classes.map(mapApiClassToSliceClass);
+    console.log("Mapped class data!!!!!!!!!!!!:", mappedData);
+    console.log("Testinggg222");
+    return mappedData;
   }
 );
 
@@ -50,7 +59,7 @@ export const fetchClassesBySchoolId = createAsyncThunk(
       console.log("Fetching classes for school ID:", schoolId);
       const response = await apiFetchClassesBySchoolId(schoolId);
       console.log("Classes by school ID raw response:", response);
-      if (!response || !response.data) {
+      if (!response || !response.data || !Array.isArray(response.data)) {
         throw new Error('Invalid response format from API');
       }
       const mappedData = response.data.map(mapApiClassToSliceClass);
@@ -111,7 +120,7 @@ const classSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch classes';
       })
-      
+
       // Fetch classes by school ID
       .addCase(fetchClassesBySchoolId.pending, (state) => {
         state.loading = true;
@@ -125,7 +134,7 @@ const classSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch classes for this school';
       })
-    
+
     // Create class
     .addCase(createClass.pending, (state) => {
       state.loading = true;

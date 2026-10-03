@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { getRole } from "@/lib/auth-storage";
 import Header from "@/components/ui/header";
 import {
@@ -17,6 +17,7 @@ import {
   Text,
   Pressable,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
@@ -25,6 +26,16 @@ import {
   fetchPendingProfiles,
   rejectProfile,
 } from "@/lib/admin";
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchSchools } from '@/store/slices/schoolSlice';
+import { fetchClasses } from '@/store/slices/classSlice';
+import { fetchSPPGList } from '@/store/slices/sppgSlice';
+import SchoolSettings from '@/components/schools/school-settings';
+import ClassSettings from '@/components/schools/class-settings';
+import SPPGSettings from '@/components/sppg/sppg-settings';
+import TeacherAssignments from '@/components/assignments/teacher-assignments';
+import SPPGAssignments from '@/components/assignments/sppg-assignments';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type CombinedPending = {
   _id: string;
@@ -35,7 +46,12 @@ type CombinedPending = {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"school" | "class" | "user">(
+  const dispatch = useAppDispatch();
+  const { schools, loading: schoolsLoading } = useAppSelector((state) => state.schools);
+  const { classes, loading: classesLoading } = useAppSelector((state) => state.classes);
+  const { sppgList, loading: sppgLoading } = useAppSelector((state) => state.sppg);
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<"school" | "class" | "sppg" | "user" | "teacher-assignment" | "sppg-assignment">(
     "school"
   );
   const [pending, setPending] = useState<CombinedPending[]>([]);
@@ -46,11 +62,9 @@ export default function SettingsScreen() {
     name: string;
     profileType: "teacher" | "sppgstaff";
   } | null>(null);
-  const [showRejectedPopup, setShowRejectedPopup] = useState(false);
-  const [rejectedInfo, setRejectedInfo] = useState<{
-    name: string;
-    profileType: "teacher" | "sppgstaff";
-  } | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const tabScrollViewRef = useRef<ScrollView>(null);
+  const [scrollX, setScrollX] = useState(0);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -71,11 +85,11 @@ export default function SettingsScreen() {
       setPending([...teachers, ...staff]);
     } catch (err) {
       console.error("Failed to load pending profiles", err);
-      Alert.alert("Error", "Failed to load pending profiles");
+      Alert.alert(t("common.error"), t("settings.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const checkRole = async () => {
@@ -86,7 +100,27 @@ export default function SettingsScreen() {
     };
     checkRole();
     loadPending();
-  }, [router, loadPending]);
+    if (activeTab === "school") {
+      dispatch(fetchSchools());
+    } else if (activeTab === "class") {
+      dispatch(fetchClasses());
+    } else if (activeTab === "sppg") {
+      dispatch(fetchSPPGList());
+    }
+  }, [router, loadPending, dispatch, activeTab]);
+
+  // Auto-refresh data when screen comes into focus (after navigating back from detail screens)
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === "school") {
+        dispatch(fetchSchools());
+      } else if (activeTab === "class") {
+        dispatch(fetchClasses());
+      } else if (activeTab === "sppg") {
+        dispatch(fetchSPPGList());
+      }
+    }, [dispatch, activeTab])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -94,75 +128,179 @@ export default function SettingsScreen() {
     setRefreshing(false);
   }, [loadPending]);
 
-  return (
-    <ScrollView contentContainerStyle={styles.scrollView}>
-      <Header title="Settings" icon="settings" />
+  const onSchoolsRefresh = async () => {
+    dispatch(fetchSchools());
+    console.log('Refreshing schools: ', schools);
+  };
 
-      <View style={styles.tabContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === "school" && styles.activeTab]}
-          onPress={() => setActiveTab("school")}
+  const onClassesRefresh = async () => {
+    dispatch(fetchClasses());
+    console.log('Refreshing classes: ', classes);
+  };
+
+  const onSPPGRefresh = async () => {
+    dispatch(fetchSPPGList());
+    console.log('Refreshing SPPG: ', sppgList);
+  };
+
+  return (
+    <View style={styles.mainView}>
+      <Header title={t("settings.title")} icon="settings" />
+
+      <View style={styles.tabScrollView}>
+        <TouchableOpacity
+          style={styles.scrollArrowLeft}
+          onPress={() => {
+            const newX = Math.max(0, scrollX - 150);
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
+          }}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "school" && styles.activeTabText,
-            ]}
-          >
-            School
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === "class" && styles.activeTab]}
-          onPress={() => setActiveTab("class")}
+          <MaterialIcons name="chevron-left" size={24} color="#6b7280" />
+        </TouchableOpacity>
+        <ScrollView
+          ref={tabScrollViewRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabContainer}
+          style={styles.tabScrollContent}
+          onScroll={(event) => {
+            setScrollX(event.nativeEvent.contentOffset.x);
+          }}
+          scrollEventThrottle={16}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "class" && styles.activeTabText,
-            ]}
+          <Pressable
+            style={[styles.tab, activeTab === "school" && styles.activeTab]}
+            onPress={() => setActiveTab("school")}
           >
-            Class
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === "user" && styles.activeTab]}
-          onPress={() => setActiveTab("user")}
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "school" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.school")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "class" && styles.activeTab]}
+            onPress={() => setActiveTab("class")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "class" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.class")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "sppg" && styles.activeTab]}
+            onPress={() => setActiveTab("sppg")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "sppg" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.sppg")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "user" && styles.activeTab]}
+            onPress={() => setActiveTab("user")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "user" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.user")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "teacher-assignment" && styles.activeTab]}
+            onPress={() => setActiveTab("teacher-assignment")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "teacher-assignment" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.teacherAssignment")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === "sppg-assignment" && styles.activeTab]}
+            onPress={() => setActiveTab("sppg-assignment")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "sppg-assignment" && styles.activeTabText,
+              ]}
+            >
+              {t("settings.sppgAssignment")}
+            </Text>
+          </Pressable>
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.scrollArrowRight}
+          onPress={() => {
+            const newX = scrollX + 150;
+            tabScrollViewRef.current?.scrollTo({ x: newX, y: 0, animated: true });
+          }}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "user" && styles.activeTabText,
-            ]}
-          >
-            User
-          </Text>
-        </Pressable>
+          <MaterialIcons name="chevron-right" size={24} color="#6b7280" />
+        </TouchableOpacity>
       </View>
 
       {activeTab === "school" && (
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>School Settings</Text>
-          <View style={styles.settingItem}>
-            <MaterialIcons name="school" size={24} color="#10B981" />
-            <Text style={styles.settingText}>Manage school information</Text>
-          </View>
-        </View>
+        <SchoolSettings
+          schools={schools}
+          loading={schoolsLoading}
+          onRefresh={onSchoolsRefresh}
+        />
       )}
 
       {activeTab === "class" && (
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Class Settings</Text>
-          <View style={styles.settingItem}>
-            <MaterialIcons name="class" size={24} color="#10B981" />
-            <Text style={styles.settingText}>Manage class information</Text>
-          </View>
-        </View>
+        <ClassSettings
+          classes={classes}
+          loading={classesLoading}
+          onRefresh={onClassesRefresh}
+        />
+      )}
+
+      {activeTab === "sppg" && (
+        <SPPGSettings
+          sppgList={sppgList}
+          loading={sppgLoading}
+          onRefresh={onSPPGRefresh}
+        />
       )}
 
       {activeTab === "user" && (
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>User Management</Text>
+          <View style={styles.searchBarContainer}>
+            <View style={styles.searchBar}>
+              <MaterialIcons name="search" size={20} color="#6b7280" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder={t("settings.searchUsers")}
+                placeholderTextColor="#9ca3af"
+                value={userSearchQuery}
+                onChangeText={setUserSearchQuery}
+              />
+              {userSearchQuery.length > 0 && (
+                <Pressable onPress={() => setUserSearchQuery("")}>
+                  <MaterialIcons name="close" size={20} color="#6b7280" />
+                </Pressable>
+              )}
+            </View>
+          </View>
           <View style={{ flex: 1 }}>
             {loading ? (
               <ActivityIndicator
@@ -172,7 +310,13 @@ export default function SettingsScreen() {
               />
             ) : (
               <FlatList
-                data={pending}
+                data={pending.filter((item) => {
+                  const query = userSearchQuery.toLowerCase();
+                  return (
+                    item.name.toLowerCase().includes(query) ||
+                    (item.email || "").toLowerCase().includes(query)
+                  );
+                })}
                 keyExtractor={(item) => `${item.profileType}-${item._id}`}
                 refreshControl={
                   <RefreshControl
@@ -201,27 +345,17 @@ export default function SettingsScreen() {
                         loadPending();
                       } catch (e) {
                         console.error(e);
-                        Alert.alert("Error", "Failed to approve profile");
+                        Alert.alert(t("common.error"), t("settings.failedToApprove"));
                       }
                     }}
                     onReject={async () => {
                       try {
                         await rejectProfile(item._id, item.profileType);
-                        try {
-                          await Haptics.notificationAsync(
-                            Haptics.NotificationFeedbackType.Error
-                          );
-                        } catch {}
-                        setRejectedInfo({
-                          name: item.name,
-                          profileType: item.profileType,
-                        });
-                        setShowRejectedPopup(true);
-                        setTimeout(() => setShowRejectedPopup(false), 1500);
+                        Alert.alert(t("common.success"), t("settings.profileRejected"));
                         loadPending();
                       } catch (e) {
                         console.error(e);
-                        Alert.alert("Error", "Failed to reject profile");
+                        Alert.alert(t("common.error"), t("settings.failedToReject"));
                       }
                     }}
                   />
@@ -233,6 +367,19 @@ export default function SettingsScreen() {
           </View>
         </View>
       )}
+
+      {activeTab === "teacher-assignment" && (
+        <View style={styles.content}>
+          <TeacherAssignments />
+        </View>
+      )}
+
+      {activeTab === "sppg-assignment" && (
+        <View style={styles.content}>
+          <SPPGAssignments />
+        </View>
+      )}
+
       {/* Success popup */}
       <ApproveSuccessModal
         visible={showApprovedPopup}
@@ -240,13 +387,7 @@ export default function SettingsScreen() {
         role={approvedInfo?.profileType}
         onClose={() => setShowApprovedPopup(false)}
       />
-      <RejectResultModal
-        visible={showRejectedPopup}
-        name={rejectedInfo?.name ?? ""}
-        role={rejectedInfo?.profileType}
-        onClose={() => setShowRejectedPopup(false)}
-      />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -257,7 +398,8 @@ type PendingItemProps = Readonly<{
 }>;
 
 function PendingItem({ item, onApprove, onReject }: PendingItemProps) {
-  const roleLabel = item.profileType === "teacher" ? "Teacher" : "SPPG Staff";
+  const { t } = useTranslation();
+  const roleLabel = item.profileType === "teacher" ? t("settings.teacher") : t("settings.sppgStaff");
   return (
     <View style={styles.card}>
       <View style={{ flex: 1 }}>
@@ -284,9 +426,10 @@ function PendingItem({ item, onApprove, onReject }: PendingItemProps) {
 }
 
 function EmptyList() {
+  const { t } = useTranslation();
   return (
     <Text style={{ textAlign: "center", marginTop: 24, color: "#666" }}>
-      No pending profiles
+      {t("settings.noPendingProfiles")}
     </Text>
   );
 }
@@ -304,6 +447,7 @@ function ApproveSuccessModal({
   role,
   onClose,
 }: ApproveSuccessModalProps) {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.9)).current;
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -324,8 +468,8 @@ function ApproveSuccessModal({
   }, [visible, fade, scale]);
 
   let roleLabel = "";
-  if (role === "teacher") roleLabel = "Teacher";
-  else if (role === "sppgstaff") roleLabel = "SPPG Staff";
+  if (role === "teacher") roleLabel = t("settings.teacher");
+  else if (role === "sppgstaff") roleLabel = t("settings.sppgStaff");
 
   return (
     <Modal
@@ -341,7 +485,7 @@ function ApproveSuccessModal({
           <View style={styles.popupIconWrap}>
             <MaterialIcons name="check-circle" size={66} color="#10B981" />
           </View>
-          <Text style={styles.popupTitle}>Approved!</Text>
+          <Text style={styles.popupTitle}>{t("settings.approved")}</Text>
           {!!name && <Text style={styles.popupName}>{name}</Text>}
           {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
         </Animated.View>
@@ -350,85 +494,45 @@ function ApproveSuccessModal({
   );
 }
 
-type RejectResultModalProps = Readonly<{
-  visible: boolean;
-  name: string;
-  role?: "teacher" | "sppgstaff";
-  onClose: () => void;
-}>;
-
-function RejectResultModal({
-  visible,
-  name,
-  role,
-  onClose,
-}: RejectResultModalProps) {
-  const scale = useRef(new Animated.Value(0.9)).current;
-  const fade = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(fade, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
-      ]).start();
-    } else {
-      fade.setValue(0);
-      scale.setValue(0.9);
-    }
-  }, [visible, fade, scale]);
-
-  let roleLabel = "";
-  if (role === "teacher") roleLabel = "Teacher";
-  else if (role === "sppgstaff") roleLabel = "SPPG Staff";
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.popupBackdrop} onPress={onClose}>
-        <Animated.View
-          style={[styles.popupCard, { opacity: fade, transform: [{ scale }] }]}
-        >
-          <View style={[styles.popupIconWrap, { backgroundColor: "#FEF2F2" }]}>
-            <MaterialIcons name="cancel" size={66} color="#EF4444" />
-          </View>
-          <Text style={styles.popupTitle}>Rejected</Text>
-          {!!name && (
-            <Text style={[styles.popupName, { color: "#EF4444" }]}>{name}</Text>
-          )}
-          {!!roleLabel && <Text style={styles.popupRole}>{roleLabel}</Text>}
-        </Animated.View>
-      </Pressable>
-    </Modal>
-  );
-}
-
 const styles = StyleSheet.create({
-  scrollView: {
+  mainView: {
     paddingHorizontal: 18,
-    paddingVertical: 20,
-    flexGrow: 1,
+    paddingTop: 20,
+    flex: 1,
+  },
+  tabScrollView: {
+    marginVertical: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  tabScrollContent: {
+    flex: 1,
   },
   tabContainer: {
     flexDirection: "row",
-    marginVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    alignItems: "center",
+  },
+  scrollArrowLeft: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollArrowRight: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 20,
     alignItems: "center",
     borderBottomWidth: 3,
     borderBottomColor: "transparent",
+    minWidth: 100,
   },
   activeTab: {
     borderBottomColor: "#10B981",
@@ -443,6 +547,31 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 16,
+    flex: 1,
+  },
+  searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#111827",
+    padding: 0,
   },
   sectionTitle: {
     fontSize: 18,
@@ -563,5 +692,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
     marginTop: 4,
+  },
+  comingSoon: {
+    fontSize: 14,
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 24,
+    fontStyle: "italic",
   },
 });

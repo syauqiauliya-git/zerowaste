@@ -26,6 +26,21 @@ export const getPendingProfiles = catchAsync(async (req, res, next) => {
     });
 });
 
+export const getApprovedTeachers = catchAsync(async (req, res, next) => {
+    const teachers = await Teacher.find({ status: 'APPROVED' })
+        .populate('school_id', 'school_name')
+        .populate('user_id', 'email')
+        .select('name school_id user_id createdAt');
+
+    res.status(200).json({
+        status: 'success',
+        results: teachers.length,
+        data: {
+            teachers
+        }
+    });
+});
+
 // Handler to approve a profile (PUT /api/admin/profiles/:id/approve)
 export const approveProfile = catchAsync(async (req, res, next) => {
     const { id } = req.params;
@@ -42,8 +57,8 @@ export const approveProfile = catchAsync(async (req, res, next) => {
     if (!profile) {
         return next(new AppError(`Profil ${profileType} dengan ID tersebut tidak ditemukan.`, 404));
     }
-    
-    // NOTE: The linked User's status remains 'is_active: true' from registration. 
+
+    // NOTE: The linked User's status remains 'is_active: true' from registration.
     // The profile status check in the login function is the final gate.
 
     res.status(200).json({
@@ -80,6 +95,7 @@ export const rejectProfile = catchAsync(async (req, res, next) => {
 
 export default {
     getPendingProfiles,
+    getApprovedTeachers,
     approveProfile,
     rejectProfile
 };

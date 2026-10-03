@@ -1,26 +1,27 @@
 "use client";
 
-import { Tabs } from "expo-router";
-import { useEffect, useState } from "react";
+import { Tabs , router } from "expo-router";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image } from "react-native";
-import { getRole } from "@/lib/auth-storage";
+import { Image, TouchableOpacity, View } from "react-native";
+
+import { useAppSelector } from "@/store/hooks";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [role, setRole] = useState<string | null>(null);
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    getRole().then((userRole) => {
-      setRole(userRole?.toLowerCase() || null);
-    });
-  }, []);
+  const handleNavigateToQrScanner = () => {
+    router.push("/qr-scanner");
+  };
+
+  // Logout is handled inside Profile screen now; header shows Notifications button
 
   return (
     <Tabs
@@ -35,6 +36,30 @@ export default function TabLayout() {
             resizeMode="contain"
           />
         ),
+        headerRight: () => (
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 16,
+              alignItems: "center",
+              marginRight: 20,
+            }}
+          >
+            {role === "teacher" && (
+              <TouchableOpacity
+                onPress={handleNavigateToQrScanner}
+                style={{
+                  marginRight: 16,
+                }}
+              >
+                <MaterialIcons name="qr-code-scanner" size={23} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <MaterialIcons name="notifications" size={23} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        ),
         headerStyle: {
           backgroundColor: "#10B981",
         },
@@ -43,27 +68,18 @@ export default function TabLayout() {
     >
       {/* Common tabs for all roles */}
       <Tabs.Screen
-        name="home"
+        name="analytics"
         options={{
-          title: "Home",
+          title: t("tabs.home"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={28} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="analytics"
-        options={{
-          title: "Analytics",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="bar-chart-outline" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="leaderboard"
         options={{
-          title: "Leaderboard",
+          title: t("tabs.leaderboard"),
           // Hide leaderboard for SPPG staff per requirement
           href: role === "sppg_staff" ? null : undefined,
           tabBarIcon: ({ color }) => (
@@ -76,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="feedback"
         options={{
-          title: "Feedback",
+          title: t("tabs.feedback"),
           // Only teachers can see this tab
           href: role === "teacher" ? undefined : null,
           tabBarIcon: ({ color }) => (
@@ -88,7 +104,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="food"
         options={{
-          title: "Food",
+          title: t("tabs.food"),
           // Only SPPG staff can see this tab
           href: role === "sppg_staff" ? undefined : null,
           tabBarIcon: ({ color }) => (
@@ -97,11 +113,23 @@ export default function TabLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: t("tabs.reports"),
+          // Only SPPG staff can see this tab
+          href: role === "sppg_staff" ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="assessment" size={28} color={color} />
+          ),
+        }}
+      />
+
       {/* Settings tab: only for admin */}
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("tabs.settings"),
           href: role === "admin" ? undefined : null,
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="settings" size={28} color={color} />
@@ -113,7 +141,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="person-outline" size={28} color={color} />
           ),

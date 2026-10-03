@@ -12,9 +12,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { Colors } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const ImgPicker = (props: any) => {
   const [pickedImage, setPickedImage] = useState<string | undefined>();
+  const { t } = useTranslation();
 
   const verifyPermissions = async () => {
     // Request camera permission
@@ -26,9 +28,9 @@ const ImgPicker = (props: any) => {
 
     if (cameraStatus !== "granted" || mediaStatus !== "granted") {
       Alert.alert(
-        "Insufficient permissions!",
-        "You need to grant camera and media library permissions to use this app.",
-        [{ text: "Okay" }]
+        t("feedback.insufficientPermissions"),
+        t("feedback.permissionsMessage"),
+        [{ text: t("common.ok") }]
       );
       return false;
     }
@@ -56,14 +58,14 @@ const ImgPicker = (props: any) => {
 
   return (
     <View>
-      <Text style={styles.label}>Photo (Optional)</Text>
+      <Text style={styles.label}>{t("feedback.photoOptional")}</Text>
       <View style={styles.imagePicker}>
         <View style={styles.imagePreview}>
           {!pickedImage ? (
             <Pressable onPress={takeImageHandler} style={styles.pressable}>
               <View style={styles.imagePlaceholder}>
                 <Ionicons name="camera-outline" size={24} />
-                <Text>Tap to upload photo</Text>
+                <Text>{t("feedback.tapToUpload")}</Text>
               </View>
             </Pressable>
           ) : (
@@ -75,7 +77,7 @@ const ImgPicker = (props: any) => {
             <Pressable onPress={takeImageHandler} style={styles.retakeBtn}>
               <View style={styles.imagePlaceholder}>
                 <Ionicons name="camera-outline" size={24} color={"white"} />
-                <Text style={{ color: "white" }}>Retake photo</Text>
+                <Text style={{ color: "white" }}>{t("feedback.retakePhoto")}</Text>
               </View>
             </Pressable>
           )}
@@ -109,8 +111,9 @@ const styles = StyleSheet.create({
     width: "45%",
     display: "flex",
     flexDirection: "row",
+    gap: 10,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
   },
   image: {
     width: "100%",

@@ -5,7 +5,11 @@ export type LoginResponse = {
   user_id: string
   token: string
   message: string
-  role: "admin" | "teacher" | "student"
+  role: "admin" | "teacher" | "sppg_staff"
+  sppg_id?: string
+  staff_id?: string
+  teacher_id?: string
+  school_id?: string
 }
 
 export async function loginApi(payload: { email: string; password: string }) {

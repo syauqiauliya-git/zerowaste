@@ -1,19 +1,37 @@
 import express from 'express';
-import classController from '../controllers/classController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
+import {
+  getAllClasses,
+  getClassById,
+  getClassesBySchoolId,
+  createClass,
+  updateClass,
+  deleteClass
+} from '../controllers/classController.js';
 
 const router = express.Router();
 
-// Apply security and role restriction for all class CRUD operations
-router.use(protect, restrictTo('admin'));
+// --------------------------------------------------------------------------
+// SECURITY: All Class routes require authentication.
+// The controller logic (req.user.role) DEPENDS on 'protect' being executed first.
+// --------------------------------------------------------------------------
+router.use(protect);
 
-router.route('/')
-  .post(classController.createClass)
-  .get(classController.getAllClasses);
+// 1. READ Operations (Open to Admin, Teacher, SPPG Staff)
+// Teachers need this to find their classes; SPPG Staff might need it for context.
+router.get('/', restrictTo('admin', 'teacher', 'sppg_staff'), getAllClasses);
+router.get('/:id', restrictTo('admin', 'teacher', 'sppg_staff'), getClassById);
+router.get('/school/:schoolId', restrictTo('admin', 'teacher', 'sppg_staff'), getClassesBySchoolId);
 
-router.route('/:id')
-  .get(classController.getClass)
-  .put(classController.updateClass)
-  .delete(classController.deleteClass);
+// 2. WRITE Operations (Strictly Admin)
+// Only Admins can manage the structural data of the school system.
+router.use(restrictTo('admin'));
+
+router.post('/', createClass);
+
+router
+  .route('/:id')
+  .put(updateClass)
+  .delete(deleteClass);
 
 export default router;

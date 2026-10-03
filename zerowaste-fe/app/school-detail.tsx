@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateSchool, deleteSchool } from "@/store/slices/schoolSlice";
 import { fetchSchoolDetail } from "@/lib/school";
-import { getRole } from "@/lib/auth-storage";
 import ClassesSection from "@/components/schools/classes";
 
 export default function SchoolDetailScreen() {
@@ -21,8 +20,8 @@ export default function SchoolDetailScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.schools);
+  const role = useAppSelector((state) => state.auth.role?.toLowerCase() || null);
   const [schoolDetail, setSchoolDetail] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     school_name: "",
     address: "",
@@ -111,10 +110,6 @@ export default function SchoolDetailScreen() {
 
   useEffect(() => {
     fetchSchoolDetailData();
-    getRole().then((role) => {
-      console.log("Role:", role);
-      setRole(role);
-    });
   }, [schoolId]);
 
   return (
